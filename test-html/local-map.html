@@ -28,7 +28,7 @@
 </head>
 <body>
 
-  <div id="map" style="width: 1280px; height: 768px;"></div>
+  <div id="map" style="width: 1024px; height: 768px;"></div>
     <script src="https://unpkg.com/protomaps@1.23.0/dist/protomaps.min.js"></script>
 
 	<script type="module">
@@ -45,12 +45,7 @@ export class Colormap {
         var n = this.colors.length
 
         var ii = Math.round(x * (n - 1))
-
-		console.log(n, ii)
-
         var color = this.colors[ii]
-
-        console.log(color)
 
         return color
     }
@@ -316,17 +311,17 @@ var hot = new Colormap([
 
 		// END of colors.js
 
-		const map = L.map('map').setView([40.67, -74.0], 10);
+		const map = L.map('map').setView([39.8333, -98.5833], 4);
 
 		// const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 		// 	maxZoom: 19,
 		// 	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 		// }).addTo(map);
 
-		const dtiles = L.tileLayer('https://storage.googleapis.com/vengroff-map-test/rastertiles/{z}/{x}/{y}.png', {
+		const tile_layer = L.tileLayer('https://storage.googleapis.com/vengroff-map-test/rastertiles/{z}/{x}/{y}.png', {
 			minZoom: 3,
-			maxZoom: 12,
-		}).addTo(map);
+			maxZoom: 8,
+		})
 
 		let STATE_PAINT_RULES = [
 			{
@@ -370,9 +365,83 @@ var hot = new Colormap([
 			label_rules:TRACT_LABEL_RULES
 		})
 
+		let CITY_PAINT_RULES = [
+			{
+				dataLayer: "cities",
+				symbolizer: new protomaps.CircleSymbolizer({
+					radius: 5,
+					fill: "rgb(127, 127, 255)"
+				})
+			}
+		];
+
+		let CITY_LABEL_RULES = [
+			{
+				dataLayer: "cities10",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: "white",
+					width:2,
+					stroke:"black",
+					font: "600 16px sans-serif"
+				})
+			},
+			{
+				dataLayer: "cities9",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: "white",
+					width:2,
+					stroke:"black",
+					font: "600 14px sans-serif"
+				})
+			},
+			{
+				dataLayer: "cities8",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: "white",
+					width:2,
+					stroke:"black",
+					font: "400 13px sans-serif"
+				})
+			},
+			{
+				dataLayer: "cities7",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: "white",
+					width:2,
+					stroke:"black",
+					font: "300 12px sans-serif"
+				})
+			},
+			{
+				dataLayer: "cities6",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: "white",
+					width:1,
+					stroke:"black",
+					font: "200 11px sans-serif"
+				})
+			},
+		];
+
+		var city_layer = protomaps.leafletLayer({
+			url:'https://storage.googleapis.com/vengroff-map-test/cities.pmtiles',
+			paint_rules:CITY_PAINT_RULES,
+			label_rules:CITY_LABEL_RULES
+		})
+
+		tile_layer.addTo(map);
 
 		tract_layer.addTo(map)
 		state_layer.addTo(map)
+		city_layer.addTo(map)
+
+		map.options.minZoom = 3;
+		map.options.maxZoom = 13;
 
 		// var layer = protomaps.leafletLayer({url:'./states-2020.pmtiles'})
 		// layer.addTo(map)

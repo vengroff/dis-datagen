@@ -8,6 +8,9 @@ MAX_ZOOM_states-2020 := 10
 MIN_ZOOM_tracts-2020 := 7
 MAX_ZOOM_tracts-2020 := 16
 
+MIN_ZOOM_cities := 4
+MAX_ZOOM_cities := 13
+
 RASTER_8_MIN_X := 38
 RASTER_8_MIN_Y := 86
 RASTER_8_MAX_X := 80
@@ -79,6 +82,18 @@ $(RASTER_TILE_DIR)/%: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
 		-y $(RASTER_${*}_MIN_Y) \
 		-Y $(RASTER_${*}_MAX_Y) \
 		$(GEN_DATA_DIR)/tracts-$(YEAR).geojson
+
+$(GEN_DATA_DIR)/cities:
+	$(PYTHON) -m cities -e 4326 $@
+
+$(GEN_DATA_DIR)/cities.pmtiles: $(GEN_DATA_DIR)/cities
+	tippecanoe --force -Z$(MIN_ZOOM_cities) -z$(MAX_ZOOM_cities) --projection=EPSG:$(EPSG) \
+		-o $@ \
+		$</cities-10.geojson \
+		$</cities-9.geojson \
+		$</cities-8.geojson \
+		$</cities-7.geojson \
+		$</cities-6.geojson
 
 all: $(LAYERS:%=$(GEN_DATA_DIR)/%-$(YEAR).pmtiles)
 
