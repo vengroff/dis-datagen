@@ -1,5 +1,5 @@
 
-from typing import Iterable
+from typing import Iterable, Optional
 import argparse
 import sys
 import geopandas as gpd
@@ -39,7 +39,7 @@ def state_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
     return gdf_states
 
 
-def save_state_bounds(year: int, epsg: int, filename: str):
+def save_state_bounds(year: int, epsg: int, filename: str, rep_filename: Optional[str]):
     """
     Generate and save the state bounds.
 
@@ -58,6 +58,10 @@ def save_state_bounds(year: int, epsg: int, filename: str):
     """
     gdf_states = state_bounds(year, epsg)
     gdf_states.to_file(filename)
+
+    if rep_filename is not None:
+        gdf_states.geometry = gdf_states.representative_point()
+        gdf_states.to_file(rep_filename)
 
 
 # From https://github.com/vengroff/censusdis/blob/main/notebooks/Nationwide%20Diversity%20and%20Integration.ipynb
@@ -118,7 +122,8 @@ def main(argv: Iterable[str]):
     parser.add_argument('-y', '--year', required=True, type=int)
 
     parser.add_argument('-e', '--epsg', type=int, default=4326)
-    parser.add_argument('-o', '--output', type=str, help="Output file.")
+    parser.add_argument('-o', '--output', type=str, help="Output file.", required=True)
+    parser.add_argument('-r', '--rep-output', type=str, help="Output file of representative points.")
 
     parser.add_argument(
         dest='layer',
@@ -135,11 +140,10 @@ def main(argv: Iterable[str]):
         print("Verbose mode on.")
 
     filename = args.output
-    if filename is None:
-        filename = '-'
+    rep_filename = args.rep_output
 
     if args.layer == 'states':
-        save_state_bounds(year=args.year, epsg=args.epsg, filename=filename)
+        save_state_bounds(year=args.year, epsg=args.epsg, filename=filename, rep_filename=rep_filename)
     elif args.layer == 'tracts':
         save_tract_bounds(year=args.year, epsg=args.epsg, filename=filename)
 
