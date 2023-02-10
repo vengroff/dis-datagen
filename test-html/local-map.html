@@ -326,6 +326,7 @@ var hot = new Colormap([
 		const tile_layer = L.tileLayer('https://storage.googleapis.com/vengroff-map-test/rastertiles/{z}/{x}/{y}.png', {
 			minZoom: 3,
 			maxZoom: 8,
+			attribution: 'U.S. Census; censusdis'
 		})
 
 		let TRACT_PAINT_RULES = [
@@ -459,6 +460,8 @@ var hot = new Colormap([
 		// state_layer.addTo(map)
 		// city_layer.addTo(map)
 		boundary_layer.addTo(map)
+
+		// tract_layer.addInspector(map)
 
 		map.options.minZoom = 4;
 		map.options.maxZoom = 13;

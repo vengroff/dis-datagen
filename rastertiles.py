@@ -123,6 +123,8 @@ def main():
                     cmap="hot",
                     legend=False,
                     figsize=(256 / 64, 256 / 64),
+                    vmin=0.0,
+                    vmax=1.0
                 )
 
                 ax.set_xlim(x_lim_3857[0], x_lim_3857[1])
