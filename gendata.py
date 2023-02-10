@@ -4,6 +4,7 @@ import argparse
 import sys
 import geopandas as gpd
 import censusdis.data as ced
+import censusdis.maps as cem
 from censusdis.states import ALL_STATES_DC_AND_PR, STATE_NJ
 import divintseg as dis
 
@@ -34,7 +35,11 @@ def state_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
         ['NAME'],
         state=ALL_STATES_DC_AND_PR,
         with_geometry=True
-    ).to_crs(epsg=epsg)
+    )
+
+    gdf_states = cem.relocate_ak_hi_pr(gdf_states)
+
+    gdf_states = gdf_states.to_crs(epsg=epsg)
 
     return gdf_states
 
@@ -90,6 +95,10 @@ def tract_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
     # Infer the geographies
 
     gdf_di = ced.add_inferred_geography(df_di, year)
+
+    gdf_di = gdf_di[~gdf_di.geometry.isnull()]
+
+    gdf_di = cem.relocate_ak_hi_pr(gdf_di)
 
     return gdf_di.to_crs(epsg=epsg)
 

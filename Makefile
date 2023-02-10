@@ -29,7 +29,7 @@ RASTER_6_MAX_Y := 27
 RASTER_5_MIN_X := 4
 RASTER_5_MIN_Y := 10
 RASTER_5_MAX_X := 11
-RASTER_5_MAX_Y := 13
+RASTER_5_MAX_Y := 14
 
 RASTER_4_MIN_X := 2
 RASTER_4_MIN_Y := 5
@@ -101,6 +101,10 @@ $(CITY_GEO_LAYER_FILES) &:
 # Create a pmtiles file containing geometry layers.
 $(GEN_DATA_DIR)/boundaries-$(YEAR).pmtiles: $(ALL_GEO_LAYER_FILES)
 	tippecanoe --force --drop-rate 0 -Z 2 -z 13 --projection=EPSG:$(EPSG) -o $@ $+
+
+# Create a pmtiles file containing boundary layers.
+$(GEN_DATA_DIR)/tracts-$(YEAR).pmtiles: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
+	tippecanoe --force --drop-rate 0 -Z 7 -z 13 --projection=EPSG:$(EPSG) -o $@ $+
 
 # Raster tiles for a given zoom level.
 $(RASTER_TILE_DIR)/%: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson

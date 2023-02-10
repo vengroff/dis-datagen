@@ -2,6 +2,8 @@
 import argparse
 from pathlib import Path
 import geopandas as gpd
+import censusdis.maps as cem
+
 
 def main():
 
@@ -18,6 +20,8 @@ def main():
     gdf_cities = gpd.read_file(path)
 
     gdf_cities = gdf_cities.sort_values(['POPULATION'], ascending=False)[['NAME', 'POP_CLASS', 'geometry']]
+
+    gdf_cities = cem.relocate_ak_hi_pr(gdf_cities)
 
     gdf_cities = gdf_cities.to_crs(epsg=args.epsg)
 

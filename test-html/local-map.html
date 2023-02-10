@@ -20,6 +20,7 @@
 			width: 600px;
 			max-width: 100%;
 			max-height: 100%;
+			background: white;
 		}
 	</style>
 
@@ -28,7 +29,7 @@
 </head>
 <body>
 
-  <div id="map" style="width: 1024px; height: 768px;"></div>
+  <div id="map" style="width: 800px; height: 600px; outline: 2px solid black; margin: 20px;"></div>
     <script src="https://unpkg.com/protomaps@1.23.0/dist/protomaps.min.js"></script>
 
 	<script type="module">
@@ -316,22 +317,17 @@ var hot = new Colormap([
 		const text_fill = "rgb(255 248 220)";
 		const text_stroke = "rgb(105 105 105)"
 
-		const map = L.map('map').setView([39.8333, -98.5833], 4);
-
-		// const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		// 	maxZoom: 19,
-		// 	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-		// }).addTo(map);
+		const map = L.map('map').setView([37, -96], 4);
 
 		const tile_layer = L.tileLayer('https://storage.googleapis.com/vengroff-map-test/rastertiles/{z}/{x}/{y}.png', {
 			minZoom: 3,
 			maxZoom: 8,
-			attribution: 'U.S. Census; censusdis'
+			attribution: '<a href="https://github.com/vengroff/censusdis">censusdis</a>'
 		})
 
 		let TRACT_PAINT_RULES = [
 			{
-				dataLayer:"tracts-2020",
+				dataLayer:"tracts2020",
 				symbolizer:new protomaps.PolygonSymbolizer({
 					fill: (z, f) => {
  						return hot.get_color(f.props.diversity);
@@ -347,7 +343,8 @@ var hot = new Colormap([
 		var tract_layer = protomaps.leafletLayer({
 			url:'https://storage.googleapis.com/vengroff-map-test/tracts-2020.pmtiles',
 			paint_rules:TRACT_PAINT_RULES,
-			label_rules:TRACT_LABEL_RULES
+			label_rules:TRACT_LABEL_RULES,
+			attribution:''
 		})
 
 		const BOUNDARY_PAINT_RULES = [
@@ -451,7 +448,8 @@ var hot = new Colormap([
 		var boundary_layer = protomaps.leafletLayer({
 			url:'https://storage.googleapis.com/vengroff-map-test/boundaries-2020.pmtiles',
 			paint_rules:BOUNDARY_PAINT_RULES,
-			label_rules:BOUNDARY_LABEL_RULES
+			label_rules:BOUNDARY_LABEL_RULES,
+			attribution:''
 		})
 
 		tile_layer.addTo(map);
@@ -465,6 +463,8 @@ var hot = new Colormap([
 
 		map.options.minZoom = 4;
 		map.options.maxZoom = 13;
+
+		map.setMaxBounds(map.getBounds());
 
 		// var layer = protomaps.leafletLayer({url:'./states-2020.pmtiles'})
 		// layer.addTo(map)
