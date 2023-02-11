@@ -55,7 +55,8 @@ EPSG := 4326
 
 # How to invoke our python script to generate
 # data for a layer.
-GENDATA := $(PYTHON) -m gendata
+GENDATA_PY := gendata.py
+GENDATA := $(PYTHON) -m $(HE) $(basename $(GENDATA_PY))
 GENDATA_FLAGS := -y $(YEAR) -e $(EPSG)
 
 RASTER_TILES := $(PYTHON) -m rastertiles
@@ -82,6 +83,8 @@ ALL_GEO_LAYER_FILES := $(STATE_GEO_LAYER_FILES) $(CITY_GEO_LAYER_FILES)
 # and integration attributes.
 $(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GEN_DATA_DIR)
 	$(GENDATA) $(GENDATA_FLAGS) -o $@ tracts
+
+$(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GENDATA_PY)
 
 # Generate state bounds and representative points.
 $(STATE_GEO_LAYER_FILES) &: $(GEN_DATA_DIR)

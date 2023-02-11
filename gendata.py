@@ -1,14 +1,13 @@
 
-from typing import Iterable, Optional
 import argparse
 import sys
-import geopandas as gpd
+from typing import Iterable, Optional
+
 import censusdis.data as ced
 import censusdis.maps as cem
-from censusdis.states import ALL_STATES_DC_AND_PR, STATE_NJ
 import divintseg as dis
-
-from matplotlib.colors import LinearSegmentedColormap
+import geopandas as gpd
+from censusdis.states import ALL_STATES_DC_AND_PR
 
 verbose = False
 
@@ -73,30 +72,53 @@ def save_state_bounds(year: int, epsg: int, filename: str, rep_filename: Optiona
 def tract_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
 
     group = "B03002"
+    total_col = f'{group}_001E'
 
     # Download the data
 
     df_bg = ced.download(
         DATASET,
         year,
+        [total_col],
         leaves_of_group=group,
         state=ALL_STATES_DC_AND_PR,
         block_group="*",
     )
 
+    leaf_cols = [col for col in df_bg.columns if col.startswith(group) and col != total_col]
+
     # Compute diversity and integration
 
     df_di = dis.di(
-        df_bg,
+        df_bg[["STATE", "COUNTY", "TRACT", "BLOCK_GROUP"] + leaf_cols],
         by=["STATE", "COUNTY", "TRACT"],
         over="BLOCK_GROUP",
     ).reset_index()
+
+    # Sum up over tracts and merge in.
+
+    df_by_tracts = df_bg.groupby(
+        ["STATE", "COUNTY", "TRACT"]
+    )[[total_col] + leaf_cols].sum().reset_index()
+
+    df_di = df_di.merge(df_by_tracts, on=["STATE", "COUNTY", "TRACT"])
 
     # Infer the geographies
 
     gdf_di = ced.add_inferred_geography(df_di, year)
 
     gdf_di = gdf_di[~gdf_di.geometry.isnull()]
+
+    # Get census county names.
+    df_county_names = ced.download(
+        DATASET,
+        year,
+        ['NAME'],
+        state="*",
+        county="*",
+    ).rename({'NAME': 'COUNTY_NAME'}, axis='columns')
+
+    gdf_di = gdf_di.merge(df_county_names, on=['STATE', 'COUNTY'])
 
     gdf_di = cem.relocate_ak_hi_pr(gdf_di)
 
