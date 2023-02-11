@@ -47,10 +47,12 @@
 			justify-content: center;
 		}
 		.about {
-			display: flex;
-			margin: 20px auto;
-			justify-content: center;
-			font: 400 12px sans-serif;
+			width: 80%;
+			margin: 40px auto;
+			font: 400 10px sans-serif;
+		}
+		.about p {
+			margin: 8px;
 		}
 		#scale {
 			display: flex;
@@ -108,7 +110,18 @@
 	  Maximum Diversity
   </div>
   <div class="about">
-	  A bit about this project...
+	  <p>
+	  Copyright &copy 2022, Darren Erik Vengroff.</p>
+	  <p>Based on U.S. Census 2020
+	  <a href="https://www.census.gov/programs-surveys/acs">American Community Survey (ACS)</a>
+		  5-Year Data.</p>
+	  <p>Open source acknowledgements: Analysis done using <a href="https://github.com/vengroff/censusdis">censusdis</a>
+	  and
+	  <a href="https://github.com/vengroff/divintseg">divintseg</a>.
+	  Maps stored using <a href="https://github.com/protomaps/PMTiles">PMTiles</a>.
+	  Map rendered in <a href="https://leafletjs.com/">Leaflet</a>
+	  with <a href="https://github.com/protomaps/protomaps.js">protomaps.js</a>.
+	  </p>
   </div>
 
 
@@ -413,11 +426,16 @@ const hot = new Colormap([
 			attribution: '<a href="https://github.com/vengroff/censusdis">censusdis</a>'
 		})
 
+		const prop_total_population = 'B03002_001E';
+
 		let TRACT_PAINT_RULES = [
 			{
 				dataLayer:"tracts2020",
 				symbolizer:new protomaps.PolygonSymbolizer({
 					fill: (z, f) => {
+						if (f.props[prop_total_population] == 0) {
+							return "rgb(192 192 192)";
+						}
  						return cmap.get_color(f.props.diversity);
  					},
 					stroke: "rgb(192 192 192)",
@@ -552,8 +570,6 @@ const hot = new Colormap([
 	// tract_layer.addInspector(map)
 
 	// Pop-up for tracts.
-
-	const prop_total_population = 'B03002_001E';
 
 	const census_prop_names = {
 		B03002_001E: "Total Population",
