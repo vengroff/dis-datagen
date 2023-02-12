@@ -1,6 +1,8 @@
 PYTHON = python3.9
 
-LAYERS = states tracts
+LAYERS = boundaries tracts
+
+CMAP = YlGn
 
 MIN_ZOOM_states-2020 := 2
 MAX_ZOOM_states-2020 := 10
@@ -29,11 +31,11 @@ RASTER_6_MAX_Y := 27
 RASTER_5_MIN_X := 4
 RASTER_5_MIN_Y := 10
 RASTER_5_MAX_X := 11
-RASTER_5_MAX_Y := 13
+RASTER_5_MAX_Y := 14
 
 RASTER_4_MIN_X := 2
 RASTER_4_MIN_Y := 5
-RASTER_4_MAX_X := 4
+RASTER_4_MAX_X := 5
 RASTER_4_MAX_Y := 6
 
 RASTER_3_MIN_X := 1
@@ -41,7 +43,12 @@ RASTER_3_MIN_Y := 2
 RASTER_3_MAX_X := 2
 RASTER_3_MAX_Y := 3
 
-RASTER_Z := 3 4 5 6 7 8
+RASTER_2_MIN_X := 0
+RASTER_2_MIN_Y := 1
+RASTER_2_MAX_X := 1
+RASTER_2_MAX_Y := 2
+
+RASTER_Z := 2 3 4 5 6 7 8
 
 
 GEN_DATA_DIR = ./build/gendata
@@ -55,24 +62,59 @@ EPSG := 4326
 
 # How to invoke our python script to generate
 # data for a layer.
-GENDATA := $(PYTHON) -m gendata
+GENDATA_PY := gendata.py
+GENDATA := $(PYTHON) -m $(HE) $(basename $(GENDATA_PY))
 GENDATA_FLAGS := -y $(YEAR) -e $(EPSG)
 
 RASTER_TILES := $(PYTHON) -m rastertiles
 
-.PHONY: all clean
+CITY_GEO_LAYER_FILES := \
+	$(GEN_DATA_DIR)/cities-10.geojson \
+	$(GEN_DATA_DIR)/cities-9.geojson \
+	$(GEN_DATA_DIR)/cities-8.geojson \
+	$(GEN_DATA_DIR)/cities-7.geojson \
+	$(GEN_DATA_DIR)/cities-6.geojson
+
+STATE_GEO_LAYER_FILES := \
+	$(GEN_DATA_DIR)/states-$(YEAR).geojson \
+	$(GEN_DATA_DIR)/states-rep-$(YEAR).geojson
+
+ALL_GEO_LAYER_FILES := $(STATE_GEO_LAYER_FILES) $(CITY_GEO_LAYER_FILES)
+
+
+.PHONY: all clean vtiles rtiles
 
 .PRECIOUS: $(GEN_DATA_DIR)/%.geojson
 
-# Use our python script to download census data
-# and generate a geojson for a given layer.
-$(GEN_DATA_DIR)/%-$(YEAR).geojson: $(GEN_DATA_DIR)
-	$(GENDATA) $(GENDATA_FLAGS) -o $@ $*
+# Generate geometry for tracts, including diversity
+# and integration attributes.
+$(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GEN_DATA_DIR)
+	$(GENDATA) $(GENDATA_FLAGS) -o $@ tracts
+
+$(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GENDATA_PY)
+
+# Generate state bounds and representative points.
+$(STATE_GEO_LAYER_FILES) &: $(GEN_DATA_DIR)
+	$(GENDATA) $(GENDATA_FLAGS) \
+		-o $(GEN_DATA_DIR)/states-$(YEAR).geojson \
+		-r $(GEN_DATA_DIR)/states-rep-$(YEAR).geojson states
+
+# Generate city representation points.
+$(CITY_GEO_LAYER_FILES) &:
+	$(PYTHON) -m cities -e 4326 $(GEN_DATA_DIR)
 
 # Convert a geojson file to a pmtiles file using
 # tippecanoe.
-$(GEN_DATA_DIR)/%.pmtiles: $(GEN_DATA_DIR)/%.geojson
-	tippecanoe --force -Z$(MIN_ZOOM_$*) -z$(MAX_ZOOM_$*) --projection=EPSG:$(EPSG) -l $* -o $@ $<
+# $(GEN_DATA_DIR)/%.pmtiles: $(GEN_DATA_DIR)/%.geojson
+# 	tippecanoe --force -Z$(MIN_ZOOM_$*) -z$(MAX_ZOOM_$*) --projection=EPSG:$(EPSG) -l $* -o $@ $<
+
+# Create a pmtiles file containing geometry layers.
+$(GEN_DATA_DIR)/boundaries-$(YEAR).pmtiles: $(ALL_GEO_LAYER_FILES)
+	tippecanoe --force --drop-rate 0 -Z 2 -z 13 --projection=EPSG:$(EPSG) -o $@ $+
+
+# Create a pmtiles file containing boundary layers.
+$(GEN_DATA_DIR)/tracts-$(YEAR).pmtiles: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
+	tippecanoe --force --drop-rate 0 -Z 7 -z 13 --projection=EPSG:$(EPSG) -o $@ $+
 
 # Raster tiles for a given zoom level.
 $(RASTER_TILE_DIR)/%: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
@@ -81,21 +123,14 @@ $(RASTER_TILE_DIR)/%: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
 		-X $(RASTER_${*}_MAX_X) \
 		-y $(RASTER_${*}_MIN_Y) \
 		-Y $(RASTER_${*}_MAX_Y) \
+		-c $(CMAP) \
 		$(GEN_DATA_DIR)/tracts-$(YEAR).geojson
 
-$(GEN_DATA_DIR)/cities:
-	$(PYTHON) -m cities -e 4326 $@
+all: vtiles rtiles
 
-$(GEN_DATA_DIR)/cities.pmtiles: $(GEN_DATA_DIR)/cities
-	tippecanoe --force -Z$(MIN_ZOOM_cities) -z$(MAX_ZOOM_cities) --projection=EPSG:$(EPSG) \
-		-o $@ \
-		$</cities-10.geojson \
-		$</cities-9.geojson \
-		$</cities-8.geojson \
-		$</cities-7.geojson \
-		$</cities-6.geojson
+vtiles: $(LAYERS:%=$(GEN_DATA_DIR)/%-$(YEAR).pmtiles)
 
-all: $(LAYERS:%=$(GEN_DATA_DIR)/%-$(YEAR).pmtiles)
+rtiles: $(RASTER_Z:%=$(RASTER_TILE_DIR)/%)
 
 clean:
 	rm -rf $(GEN_DATA_DIR)

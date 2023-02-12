@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script defer data-domain="datapinions.com" src="https://plausible.io/js/script.js"></script>
+
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	<title>Diversity in America</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+			color: #333;
+		}
+		.leaflet-container {
+			height: 400px;
+			width: 600px;
+			max-width: 100%;
+			max-height: 100%;
+			background: white;
+		}
+		.title {
+			text-align: center;
+			font: 600 36px sans-serif;
+			padding: 10px;
+			margin: 10px;
+		}
+		.mapbox {
+			margin-left: auto;
+            margin-right: auto;
+			width: 80%;
+			aspect-ratio: 16/9;
+			border: 2px solid black;
+		}
+		.scalebox {
+			width: auto;
+			height: auto;
+			margin: 6px auto;
+			padding: 2px;
+			position: relative;
+			font: 400 12px sans-serif;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.about {
+			width: 80%;
+			margin: 40px auto;
+			font: 400 10px sans-serif;
+		}
+		.about p {
+			margin: 4px;
+		}
+		#scale {
+			display: flex;
+			height: 1.5em;
+			width: 40%;
+			border: 1px solid black;
+			margin: 4px;
+		}
+		.colorbar {
+			width: 0.5%;
+			height: 100%;
+		}
+		.popup {
+			max-height: 400px;
+			overflow-y: scroll;
+			padding-right:32px;
+			font: 400 12px sans-serif;
+		}
+		.popup-head {
+			font: 600 16px sans-serif;
+			margin-bottom: 10px;
+		}
+		.popup-di {
+			font: 600 14px sans-serif;
+			margin-top: 4px;
+			display: flex;
+			justify-content: space-between;
+		}
+		.popup-row div {
+			max-width: 80%;
+		}
+		.popup-row {
+			margin-top: 3px;
+			display: flex;
+			justify-content: space-between;
+		}
+		.popup-row div {
+			max-width: 80%;
+			font-size: 1em;
+		}
+	</style>
+	
+</head>
+<body>
+
+  <div class="title">
+	  Diversity in America
+  </div>
+  <div class="mapbox">
+	<div id="map" style="width: 100%; height: 100%;"></div>
+  </div>
+  <div class="scalebox">
+	  No Diversity
+	  <div id="scale"></div>
+	  Maximum Diversity
+  </div>
+  <div class="about">
+	  <p>
+	  Copyright &copy 2022, Darren Erik Vengroff.</p>
+	  <p>For more details, see this
+		  <a href="https://datapinions.com/diversity-and-integration-in-america-an-interactive-visualization/">
+			  blog post
+		  </a>.
+	  </p>
+	  <p>Based on U.S. Census 2020
+	  <a href="https://www.census.gov/programs-surveys/acs">American Community Survey (ACS)</a>
+		  5-Year Data.</p>
+	  <p>Open source acknowledgements: Analysis done using <a href="https://github.com/vengroff/censusdis">censusdis</a>
+	  and
+	  <a href="https://github.com/vengroff/divintseg">divintseg</a>.
+	  Maps stored using <a href="https://github.com/protomaps/PMTiles">PMTiles</a>.
+	  Map rendered in <a href="https://leafletjs.com/">Leaflet</a>
+	  with <a href="https://github.com/protomaps/protomaps.js">protomaps.js</a>.
+	  </p>
+	  <p>v0.2.0a</p>
+  </div>
+
+
+    <script src="https://unpkg.com/protomaps@1.23.0/dist/protomaps.min.js"></script>
+
+	<script type="module">
+		// This could be imported from colors.js with:
+		// import { inferno } from "./js/colors.js";
+
+
+export class Colormap {
+    constructor(colors) {
+        this.colors = colors
+    }
+
+    get_color(x) {
+        var n = this.colors.length
+
+        var ii = Math.round(x * (n - 1))
+        var color = this.colors[ii]
+
+        return color
+    }
+
+    get_colors() {
+    	return this.colors;
+    }
+}
+
+const YlGn = new Colormap([
+  "rgb(255 255 229)",
+  "rgb(254 254 227)",
+  "rgb(254 254 226)",
+  "rgb(254 254 224)",
+  "rgb(253 254 223)",
+  "rgb(253 254 222)",
+  "rgb(253 254 220)",
+  "rgb(253 254 219)",
+  "rgb(252 254 217)",
+  "rgb(252 254 216)",
+  "rgb(252 254 215)",
+  "rgb(252 253 213)",
+  "rgb(251 253 212)",
+  "rgb(251 253 211)",
+  "rgb(251 253 209)",
+  "rgb(251 253 208)",
+  "rgb(250 253 206)",
+  "rgb(250 253 205)",
+  "rgb(250 253 204)",
+  "rgb(250 253 202)",
+  "rgb(249 253 201)",
+  "rgb(249 253 200)",
+  "rgb(249 252 198)",
+  "rgb(249 252 197)",
+  "rgb(248 252 195)",
+  "rgb(248 252 194)",
+  "rgb(248 252 193)",
+  "rgb(248 252 191)",
+  "rgb(247 252 190)",
+  "rgb(247 252 188)",
+  "rgb(247 252 187)",
+  "rgb(247 252 186)",
+  "rgb(246 251 184)",
+  "rgb(245 251 184)",
+  "rgb(245 251 183)",
+  "rgb(244 250 182)",
+  "rgb(243 250 182)",
+  "rgb(242 250 181)",
+  "rgb(241 249 180)",
+  "rgb(240 249 180)",
+  "rgb(239 248 179)",
+  "rgb(238 248 178)",
+  "rgb(237 248 178)",
+  "rgb(236 247 177)",
+  "rgb(235 247 176)",
+  "rgb(234 247 175)",
+  "rgb(233 246 175)",
+  "rgb(232 246 174)",
+  "rgb(231 245 173)",
+  "rgb(230 245 173)",
+  "rgb(229 245 172)",
+  "rgb(229 244 171)",
+  "rgb(228 244 171)",
+  "rgb(227 244 170)",
+  "rgb(226 243 169)",
+  "rgb(225 243 169)",
+  "rgb(224 242 168)",
+  "rgb(223 242 167)",
+  "rgb(222 242 166)",
+  "rgb(221 241 166)",
+  "rgb(220 241 165)",
+  "rgb(219 241 164)",
+  "rgb(218 240 164)",
+  "rgb(217 240 163)",
+  "rgb(216 239 162)",
+  "rgb(215 239 162)",
+  "rgb(213 238 161)",
+  "rgb(212 238 160)",
+  "rgb(211 237 160)",
+  "rgb(209 236 159)",
+  "rgb(208 236 158)",
+  "rgb(206 235 158)",
+  "rgb(205 235 157)",
+  "rgb(204 234 156)",
+  "rgb(202 233 156)",
+  "rgb(201 233 155)",
+  "rgb(200 232 154)",
+  "rgb(198 232 154)",
+  "rgb(197 231 153)",
+  "rgb(195 230 152)",
+  "rgb(194 230 152)",
+  "rgb(193 229 151)",
+  "rgb(191 229 150)",
+  "rgb(190 228 150)",
+  "rgb(189 227 149)",
+  "rgb(187 227 149)",
+  "rgb(186 226 148)",
+  "rgb(184 226 147)",
+  "rgb(183 225 147)",
+  "rgb(182 224 146)",
+  "rgb(180 224 145)",
+  "rgb(179 223 145)",
+  "rgb(178 223 144)",
+  "rgb(176 222 143)",
+  "rgb(175 221 143)",
+  "rgb(173 221 142)",
+  "rgb(172 220 141)",
+  "rgb(170 220 141)",
+  "rgb(169 219 140)",
+  "rgb(167 218 139)",
+  "rgb(165 217 139)",
+  "rgb(164 217 138)",
+  "rgb(162 216 137)",
+  "rgb(160 215 137)",
+  "rgb(159 214 136)",
+  "rgb(157 214 135)",
+  "rgb(155 213 135)",
+  "rgb(154 212 134)",
+  "rgb(152 212 133)",
+  "rgb(150 211 133)",
+  "rgb(149 210 132)",
+  "rgb(147 209 131)",
+  "rgb(145 209 131)",
+  "rgb(144 208 130)",
+  "rgb(142 207 129)",
+  "rgb(140 207 129)",
+  "rgb(139 206 128)",
+  "rgb(137 205 127)",
+  "rgb(135 204 127)",
+  "rgb(134 204 126)",
+  "rgb(132 203 125)",
+  "rgb(130 202 125)",
+  "rgb(129 201 124)",
+  "rgb(127 201 123)",
+  "rgb(125 200 123)",
+  "rgb(124 199 122)",
+  "rgb(122 199 121)",
+  "rgb(119 197 120)",
+  "rgb(117 196 119)",
+  "rgb(115 195 118)",
+  "rgb(113 195 117)",
+  "rgb(112 194 117)",
+  "rgb(110 193 116)",
+  "rgb(108 192 115)",
+  "rgb(107 191 114)",
+  "rgb(105 190 113)",
+  "rgb(103 189 112)",
+  "rgb(101 189 111)",
+  "rgb(100 188 110)",
+  "rgb(98 187 110)",
+  "rgb(96 186 109)",
+  "rgb(94 185 108)",
+  "rgb(93 184 107)",
+  "rgb(91 184 106)",
+  "rgb(89 183 105)",
+  "rgb(88 182 104)",
+  "rgb(86 181 103)",
+  "rgb(84 180 102)",
+  "rgb(82 179 102)",
+  "rgb(81 178 101)",
+  "rgb(79 178 100)",
+  "rgb(77 177 99)",
+  "rgb(75 176 98)",
+  "rgb(74 175 97)",
+  "rgb(72 174 96)",
+  "rgb(70 173 95)",
+  "rgb(69 173 95)",
+  "rgb(67 172 94)",
+  "rgb(65 171 93)",
+  "rgb(64 170 92)",
+  "rgb(63 169 91)",
+  "rgb(62 167 90)",
+  "rgb(61 166 90)",
+  "rgb(60 165 89)",
+  "rgb(59 164 88)",
+  "rgb(58 162 87)",
+  "rgb(57 161 86)",
+  "rgb(56 160 85)",
+  "rgb(55 159 85)",
+  "rgb(55 158 84)",
+  "rgb(54 156 83)",
+  "rgb(53 155 82)",
+  "rgb(52 154 81)",
+  "rgb(51 153 81)",
+  "rgb(50 151 80)",
+  "rgb(49 150 79)",
+  "rgb(48 149 78)",
+  "rgb(47 148 77)",
+  "rgb(46 146 76)",
+  "rgb(45 145 76)",
+  "rgb(44 144 75)",
+  "rgb(43 143 74)",
+  "rgb(42 142 73)",
+  "rgb(41 140 72)",
+  "rgb(40 139 72)",
+  "rgb(39 138 71)",
+  "rgb(39 137 70)",
+  "rgb(38 135 69)",
+  "rgb(37 134 68)",
+  "rgb(36 133 68)",
+  "rgb(35 132 67)",
+  "rgb(34 131 66)",
+  "rgb(33 130 66)",
+  "rgb(31 129 65)",
+  "rgb(30 128 65)",
+  "rgb(29 127 65)",
+  "rgb(28 126 64)",
+  "rgb(27 126 64)",
+  "rgb(26 125 64)",
+  "rgb(25 124 63)",
+  "rgb(24 123 63)",
+  "rgb(23 122 62)",
+  "rgb(22 121 62)",
+  "rgb(21 120 62)",
+  "rgb(19 119 61)",
+  "rgb(18 119 61)",
+  "rgb(17 118 61)",
+  "rgb(16 117 60)",
+  "rgb(15 116 60)",
+  "rgb(14 115 59)",
+  "rgb(13 114 59)",
+  "rgb(12 113 59)",
+  "rgb(11 112 58)",
+  "rgb(10 112 58)",
+  "rgb(8 111 58)",
+  "rgb(7 110 57)",
+  "rgb(6 109 57)",
+  "rgb(5 108 56)",
+  "rgb(4 107 56)",
+  "rgb(3 106 56)",
+  "rgb(2 105 55)",
+  "rgb(1 104 55)",
+  "rgb(0 104 55)",
+  "rgb(0 103 54)",
+  "rgb(0 101 54)",
+  "rgb(0 100 53)",
+  "rgb(0 99 53)",
+  "rgb(0 98 52)",
+  "rgb(0 97 52)",
+  "rgb(0 96 51)",
+  "rgb(0 95 51)",
+  "rgb(0 94 51)",
+  "rgb(0 93 50)",
+  "rgb(0 92 50)",
+  "rgb(0 90 49)",
+  "rgb(0 89 49)",
+  "rgb(0 88 48)",
+  "rgb(0 87 48)",
+  "rgb(0 86 48)",
+  "rgb(0 85 47)",
+  "rgb(0 84 47)",
+  "rgb(0 83 46)",
+  "rgb(0 82 46)",
+  "rgb(0 81 45)",
+  "rgb(0 79 45)",
+  "rgb(0 78 44)",
+  "rgb(0 77 44)",
+  "rgb(0 76 44)",
+  "rgb(0 75 43)",
+  "rgb(0 74 43)",
+  "rgb(0 73 42)",
+  "rgb(0 72 42)",
+  "rgb(0 71 41)",
+  "rgb(0 70 41)",
+  "rgb(0 69 41)",
+]);
+
+
+		// END of colors.js
+
+	const cmap = YlGn;
+
+		// text rendering settings
+		const line_height = 1.7;
+		const text_stroke = "#ffffff7f";
+		const text_fill = "#111"
+
+		const map = L.map('map', {attributionControl: false});
+
+		const tile_layer = L.tileLayer('https://storage.googleapis.com/vengroff-map-test/rastertiles/{z}/{x}/{y}.png', {
+			minZoom: 2,
+			maxZoom: 8,
+			attribution: '<a href="https://github.com/vengroff/censusdis">censusdis</a>'
+		})
+
+		const prop_total_population = 'B03002_001E';
+
+		let TRACT_PAINT_RULES = [
+			{
+				dataLayer:"tracts2020",
+				symbolizer:new protomaps.PolygonSymbolizer({
+					fill: (z, f) => {
+						if (f.props[prop_total_population] == 0) {
+							return "rgb(192 192 192)";
+						}
+ 						return cmap.get_color(f.props.diversity);
+ 					},
+					stroke: "rgb(192 192 192)",
+					width: 0.5
+				})
+			}
+		];
+
+		let TRACT_LABEL_RULES = []; // ignore for now
+
+		var tract_layer = protomaps.leafletLayer({
+			url:'https://storage.googleapis.com/vengroff-map-test/tracts-2020.pmtiles',
+			paint_rules:TRACT_PAINT_RULES,
+			label_rules:TRACT_LABEL_RULES,
+			attribution:''
+		})
+
+		const BOUNDARY_PAINT_RULES = [
+			{
+				dataLayer:"states2020",
+				symbolizer:new protomaps.PolygonSymbolizer({
+					fill: "transparent",
+					stroke: "rgb(127 127 127)",
+					width: (z, f) => {
+						if (z >= 6)
+							return 5;
+						if (z >= 5)
+							return 3;
+						return 1;
+					}
+				})
+			}
+		];
+
+		let BOUNDARY_LABEL_RULES = [
+			{
+				dataLayer: "statesrep2020",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width: 2,
+					stroke: text_stroke,
+					lineHeight: line_height,
+					font: (z, f) => {
+						if (z <= 5)
+							return "600 12px sans-serif";
+						if (z <= 7)
+							return "600 16px sans-serif";
+						return "400 20px sans-serif";
+					 }
+				}),
+				minzoom: 5
+			},
+			{
+				dataLayer: "cities10",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width:2,
+					lineHeight: line_height,
+					stroke: text_stroke,
+					font: "400 16px sans-serif"
+				}),
+				minzoom: 5
+			},
+			{
+				dataLayer: "cities9",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width:2,
+					lineHeight: line_height,
+					stroke: text_stroke,
+					font: "400 14px sans-serif"
+				}),
+				minzoom: 5
+			},
+			{
+				dataLayer: "cities8",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width:2,
+					lineHeight: line_height,
+					stroke: text_stroke,
+					font: "300 13px sans-serif"
+				}),
+				minzoom: 6
+			},
+			{
+				dataLayer: "cities7",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width:2,
+					lineHeight: line_height,
+					stroke: text_stroke,
+					font: "300 12px sans-serif"
+				}),
+				minzoom: 8
+			},
+			{
+				dataLayer: "cities6",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width:1,
+					lineHeight: line_height,
+					stroke: text_stroke,
+					font: "200 11px sans-serif"
+				}),
+				minzoom: 9
+			},
+		];
+
+		var boundary_layer = protomaps.leafletLayer({
+			url:'https://storage.googleapis.com/vengroff-map-test/boundaries-2020.pmtiles',
+			paint_rules:BOUNDARY_PAINT_RULES,
+			label_rules:BOUNDARY_LABEL_RULES,
+			attribution:''
+		})
+
+		tile_layer.addTo(map);
+		tract_layer.addTo(map)
+		boundary_layer.addTo(map)
+
+		map.options.minZoom = 2;
+		map.options.maxZoom = 13;
+
+		map.fitBounds([[22, -128], [52, -68]])
+		map.setMaxBounds(map.getBounds());
+
+	// tract_layer.addInspector(map)
+
+	// Pop-up for tracts.
+
+	const census_prop_names = {
+		B03002_001E: "Total Population",
+		B03002_003E: "Non-Hispanic White",
+		B03002_004E: "Non-Hispanic Black or African American",
+		B03002_005E: "Non-Hispanic American Indian and Alaska Native",
+		B03002_006E: "Non-Hispanic Asian",
+		B03002_007E: "Non-Hispanic Native Hawaiian and Other Pacific Islander",
+		B03002_008E: "Non-Hispanic Some Other Race",
+		B03002_010E: "Non-Hispanic Two or more races: Two races including Some other race",
+		B03002_011E: "Non-Hispanic Two or more races: Two races excluding Some other race, and three or more races",
+
+		B03002_013E: "Hispanic or Latino White",
+		B03002_014E: "Hispanic or Latino Black or African American",
+		B03002_015E: "Hispanic or Latino American Indian and Alaska Native",
+		B03002_016E: "Hispanic or Latino Asian",
+		B03002_017E: "Hispanic or Latino Native Hawaiian and Other Pacific Islander",
+		B03002_018E: "Hispanic or Latino Some Other Race",
+		B03002_020E: "Hispanic or Latino Two or more races: Two races including Some other race",
+		B03002_021E: "Hispanic or Latino Two or more races: Two races excluding Some other race, and three or more races",
+
+	}
+
+	function numberWithCommas(x) {
+		return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	}
+
+	function on_map_click(ev) {
+		let wrapped = map.wrapLatLng(ev.latlng);
+
+		let resultsBySourceName = tract_layer.queryFeatures(wrapped.lng, wrapped.lat);
+
+		for (var [sourceName, results] of resultsBySourceName) {
+		  if(results.length > 0) {
+			  for (var result of results) {
+				var props = result.feature.props;
+
+				var content = `<div class="popup-head">Census Tract ${props['TRACT']} in ${props['COUNTY_NAME']}</div>`;
+
+				content = content + `<div class="popup-di""><div>${census_prop_names[prop_total_population]}</div><div>${numberWithCommas(props[prop_total_population])}</div></div>`;
+				content = content + `<div class="popup-di"><div>Diversity</div><div>${Math.round(100 * props['diversity'])}%</div></div>`;
+				content = content + `<div class="popup-di" style="margin-bottom: 10px"><div>Integration</div><div>${Math.round(100 * props['integration'])}%</div></div>`;
+
+				for (const prop in props) {
+					if (prop !== prop_total_population) {
+						if (prop in census_prop_names) {
+							if (props[prop] > 0) {
+								content = content + `<div class="popup-row"><div>${census_prop_names[prop]}</div><div>${numberWithCommas(props[prop])}</div></div>`;
+							}
+						}
+					}
+				}
+			  }
+
+			L.popup()
+			  .setLatLng(ev.latlng)
+			  .setContent(
+				'<div class="popup">' +
+				  content +
+				  "</div>"
+			  )
+			  .openOn(map);
+			}
+		}
+	}
+
+	map.on("click", on_map_click)
+
+	// Fill in the color scale.
+
+	const scale = document.getElementById("scale");
+
+	console.log(scale);
+
+	for(const color of cmap.get_colors()) {
+
+		const bar = document.createElement('div');
+		bar.className = "colorbar";
+		bar.style.backgroundColor = color;
+
+		scale.appendChild(bar);
+	}
+
+  </script>
+
+</body>
+</html>

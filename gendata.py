@@ -1,13 +1,13 @@
 
-from typing import Iterable
 import argparse
 import sys
-import geopandas as gpd
-import censusdis.data as ced
-from censusdis.states import ALL_STATES_DC_AND_PR, STATE_NJ
-import divintseg as dis
+from typing import Iterable, Optional
 
-from matplotlib.colors import LinearSegmentedColormap
+import censusdis.data as ced
+import censusdis.maps as cem
+import divintseg as dis
+import geopandas as gpd
+from censusdis.states import ALL_STATES_DC_AND_PR
 
 verbose = False
 
@@ -34,12 +34,16 @@ def state_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
         ['NAME'],
         state=ALL_STATES_DC_AND_PR,
         with_geometry=True
-    ).to_crs(epsg=epsg)
+    )
+
+    gdf_states = cem.relocate_ak_hi_pr(gdf_states)
+
+    gdf_states = gdf_states.to_crs(epsg=epsg)
 
     return gdf_states
 
 
-def save_state_bounds(year: int, epsg: int, filename: str):
+def save_state_bounds(year: int, epsg: int, filename: str, rep_filename: Optional[str]):
     """
     Generate and save the state bounds.
 
@@ -59,33 +63,64 @@ def save_state_bounds(year: int, epsg: int, filename: str):
     gdf_states = state_bounds(year, epsg)
     gdf_states.to_file(filename)
 
+    if rep_filename is not None:
+        gdf_states.geometry = gdf_states.representative_point()
+        gdf_states.to_file(rep_filename)
+
 
 # From https://github.com/vengroff/censusdis/blob/main/notebooks/Nationwide%20Diversity%20and%20Integration.ipynb
 def tract_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
 
     group = "B03002"
+    total_col = f'{group}_001E'
 
     # Download the data
 
     df_bg = ced.download(
         DATASET,
         year,
+        [total_col],
         leaves_of_group=group,
         state=ALL_STATES_DC_AND_PR,
         block_group="*",
     )
 
+    leaf_cols = [col for col in df_bg.columns if col.startswith(group) and col != total_col]
+
     # Compute diversity and integration
 
     df_di = dis.di(
-        df_bg,
+        df_bg[["STATE", "COUNTY", "TRACT", "BLOCK_GROUP"] + leaf_cols],
         by=["STATE", "COUNTY", "TRACT"],
         over="BLOCK_GROUP",
     ).reset_index()
 
+    # Sum up over tracts and merge in.
+
+    df_by_tracts = df_bg.groupby(
+        ["STATE", "COUNTY", "TRACT"]
+    )[[total_col] + leaf_cols].sum().reset_index()
+
+    df_di = df_di.merge(df_by_tracts, on=["STATE", "COUNTY", "TRACT"])
+
     # Infer the geographies
 
     gdf_di = ced.add_inferred_geography(df_di, year)
+
+    gdf_di = gdf_di[~gdf_di.geometry.isnull()]
+
+    # Get census county names.
+    df_county_names = ced.download(
+        DATASET,
+        year,
+        ['NAME'],
+        state="*",
+        county="*",
+    ).rename({'NAME': 'COUNTY_NAME'}, axis='columns')
+
+    gdf_di = gdf_di.merge(df_county_names, on=['STATE', 'COUNTY'])
+
+    gdf_di = cem.relocate_ak_hi_pr(gdf_di)
 
     return gdf_di.to_crs(epsg=epsg)
 
@@ -118,7 +153,8 @@ def main(argv: Iterable[str]):
     parser.add_argument('-y', '--year', required=True, type=int)
 
     parser.add_argument('-e', '--epsg', type=int, default=4326)
-    parser.add_argument('-o', '--output', type=str, help="Output file.")
+    parser.add_argument('-o', '--output', type=str, help="Output file.", required=True)
+    parser.add_argument('-r', '--rep-output', type=str, help="Output file of representative points.")
 
     parser.add_argument(
         dest='layer',
@@ -135,11 +171,10 @@ def main(argv: Iterable[str]):
         print("Verbose mode on.")
 
     filename = args.output
-    if filename is None:
-        filename = '-'
+    rep_filename = args.rep_output
 
     if args.layer == 'states':
-        save_state_bounds(year=args.year, epsg=args.epsg, filename=filename)
+        save_state_bounds(year=args.year, epsg=args.epsg, filename=filename, rep_filename=rep_filename)
     elif args.layer == 'tracts':
         save_tract_bounds(year=args.year, epsg=args.epsg, filename=filename)
 
