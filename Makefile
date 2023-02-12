@@ -41,7 +41,12 @@ RASTER_3_MIN_Y := 2
 RASTER_3_MAX_X := 2
 RASTER_3_MAX_Y := 3
 
-RASTER_Z := 3 4 5 6 7 8
+RASTER_2_MIN_X := 0
+RASTER_2_MIN_Y := 1
+RASTER_2_MAX_X := 1
+RASTER_2_MAX_Y := 2
+
+RASTER_Z := 2 3 4 5 6 7 8
 
 
 GEN_DATA_DIR = ./build/gendata

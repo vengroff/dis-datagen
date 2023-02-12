@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<script defer data-domain="datapinions.com" src="https://plausible.io/js/script.js"></script>
+
 	<base target="_top">
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -52,7 +54,7 @@
 			font: 400 10px sans-serif;
 		}
 		.about p {
-			margin: 8px;
+			margin: 4px;
 		}
 		#scale {
 			display: flex;
@@ -112,6 +114,11 @@
   <div class="about">
 	  <p>
 	  Copyright &copy 2022, Darren Erik Vengroff.</p>
+	  <p>For more details, see this
+		  <a href="https://datapinions.com/diversity-and-integration-in-america-an-interactive-visualization/">
+			  blog post
+		  </a>.
+	  </p>
 	  <p>Based on U.S. Census 2020
 	  <a href="https://www.census.gov/programs-surveys/acs">American Community Survey (ACS)</a>
 		  5-Year Data.</p>
@@ -122,6 +129,7 @@
 	  Map rendered in <a href="https://leafletjs.com/">Leaflet</a>
 	  with <a href="https://github.com/protomaps/protomaps.js">protomaps.js</a>.
 	  </p>
+	  <p>v0.1.0a</p>
   </div>
 
 
@@ -418,10 +426,10 @@ const hot = new Colormap([
 		const text_fill = "rgb(255 248 220)";
 		const text_stroke = "rgb(105 105 105)"
 
-		const map = L.map('map').setView([38, -98], 4);
+		const map = L.map('map');
 
 		const tile_layer = L.tileLayer('https://storage.googleapis.com/vengroff-map-test/rastertiles/{z}/{x}/{y}.png', {
-			minZoom: 3,
+			minZoom: 2,
 			maxZoom: 8,
 			attribution: '<a href="https://github.com/vengroff/censusdis">censusdis</a>'
 		})
@@ -562,9 +570,10 @@ const hot = new Colormap([
 		tract_layer.addTo(map)
 		boundary_layer.addTo(map)
 
-		map.options.minZoom = 4;
+		map.options.minZoom = 2;
 		map.options.maxZoom = 13;
 
+		map.fitBounds([[22, -128], [52, -68]])
 		map.setMaxBounds(map.getBounds());
 
 	// tract_layer.addInspector(map)
