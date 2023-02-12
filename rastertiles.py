@@ -29,6 +29,13 @@ def main():
     parser.add_argument('-y', "--min-y", type=int)
     parser.add_argument('-Y', "--max-y", type=int)
 
+    parser.add_argument('-c', '--cmap', type=str, default='Greens')  # try also 'hot'
+
+    parser.add_argument(
+        '-t', '--total-population', default='B03002_001E', type=str,
+        help='Total population variable, so we can check for empty tracts.'
+    )
+
     parser.add_argument('-o', '--output-dir', type=str, required=True)
 
     parser.add_argument('input', type=str)
@@ -121,12 +128,23 @@ def main():
 
                 ax = gdf_clipped.plot(
                     'diversity',
-                    cmap="hot",
+                    cmap=args.cmap,
                     legend=False,
                     figsize=(256 / 64, 256 / 64),
                     vmin=0.0,
                     vmax=1.0
                 )
+
+                # Grey out empty tracts.
+                gdf_clipped_empty = gdf_clipped[gdf_clipped[args.total_population] == 0]
+
+                if len(gdf_clipped_empty.index) > 0:
+                    ax = gdf_clipped_empty.plot(
+                        color='#C0C0C0',
+                        legend=False,
+                        figsize=(256 / 64, 256 / 64),
+                        ax=ax,
+                    )
 
                 ax.set_xlim(x_lim_3857[0], x_lim_3857[1])
                 ax.set_ylim(y_lim_3857[0], y_lim_3857[1])
@@ -149,6 +167,8 @@ def main():
                     print(f"Saving to {tile_file}.")
 
                 plt.savefig(tile_file, bbox_inches='tight', pad_inches=0.0, dpi=64)
+
+                plt.close()
 
 
 if __name__ == "__main__":

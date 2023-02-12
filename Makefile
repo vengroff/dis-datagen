@@ -2,6 +2,8 @@ PYTHON = python3.9
 
 LAYERS = boundaries tracts
 
+CMAP = YlGn
+
 MIN_ZOOM_states-2020 := 2
 MAX_ZOOM_states-2020 := 10
 
@@ -80,7 +82,7 @@ STATE_GEO_LAYER_FILES := \
 ALL_GEO_LAYER_FILES := $(STATE_GEO_LAYER_FILES) $(CITY_GEO_LAYER_FILES)
 
 
-.PHONY: all clean
+.PHONY: all clean vtiles rtiles
 
 .PRECIOUS: $(GEN_DATA_DIR)/%.geojson
 
@@ -121,9 +123,14 @@ $(RASTER_TILE_DIR)/%: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
 		-X $(RASTER_${*}_MAX_X) \
 		-y $(RASTER_${*}_MIN_Y) \
 		-Y $(RASTER_${*}_MAX_Y) \
+		-c $(CMAP) \
 		$(GEN_DATA_DIR)/tracts-$(YEAR).geojson
 
-all: $(LAYERS:%=$(GEN_DATA_DIR)/%-$(YEAR).pmtiles)
+all: vtiles rtiles
+
+vtiles: $(LAYERS:%=$(GEN_DATA_DIR)/%-$(YEAR).pmtiles)
+
+rtiles: $(RASTER_Z:%=$(RASTER_TILE_DIR)/%)
 
 clean:
 	rm -rf $(GEN_DATA_DIR)

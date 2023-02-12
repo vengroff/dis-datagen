@@ -7,13 +7,13 @@ import numpy as np
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-n', '--name', type=str, default='hot')
+    parser.add_argument('-c', '--cmap', type=str, default='YlGn')
 
     args = parser.parse_args()
 
-    print(f"var {args.name} = new Colormap([")
+    print(f"const {args.cmap} = new Colormap([")
 
-    cmap = mpl.colormaps[args.name]
+    cmap = mpl.colormaps[args.cmap]
 
     if isinstance(cmap, LinearSegmentedColormap):
         for x in np.linspace(0.0, 1.0, 255):
@@ -29,7 +29,7 @@ def main():
             b255 = int(b * 255)
             print(f'  "rgb({r255} {g255} {b255})",')
 
-    print("])")
+    print("]);")
 
 
 if __name__ == "__main__":
