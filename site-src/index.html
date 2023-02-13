@@ -50,7 +50,7 @@
 	  Map rendered in <a href="https://leafletjs.com/">Leaflet</a>
 	  with <a href="https://github.com/protomaps/protomaps.js">protomaps.js</a>.
 	  </p>
-	  <p>v0.2.0a</p>
+	  <p>v0.3.0a</p>
   </div>
 
 
@@ -68,11 +68,25 @@
 
 		const map = L.map('map', {attributionControl: false});
 
-		const tile_layer = L.tileLayer('https://storage.googleapis.com/vengroff-map-test/rastertiles/{z}/{x}/{y}.png', {
-			minZoom: 2,
-			maxZoom: 8,
-			attribution: '<a href="https://github.com/vengroff/censusdis">censusdis</a>'
-		})
+		const diversity_tile_url = `https://storage.googleapis.com/vengroff-map-test/rastertiles/${cmap.name}/diversity/{z}/{x}/{y}.png`;
+		const integration_tile_url = `https://storage.googleapis.com/vengroff-map-test/rastertiles/${cmap.name}/integration/{z}/{x}/{y}.png`;
+
+		const diversity_tile_layer = L.tileLayer(
+			diversity_tile_url,
+			{
+				minZoom: 2,
+				maxZoom: 8,
+			}
+		)
+		const integration_tile_layer = L.tileLayer(
+			diversity_tile_url,
+			{
+				minZoom: 2,
+				maxZoom: 8,
+			}
+		)
+
+		var tile_layer = diversity_tile_layer;
 
 		const prop_total_population = 'B03002_001E';
 
@@ -206,7 +220,7 @@
 			attribution:''
 		})
 
-		tile_layer.addTo(map);
+		diversity_tile_layer.addTo(map);
 		tract_layer.addTo(map)
 		boundary_layer.addTo(map)
 
@@ -325,6 +339,13 @@
   	  	// a redraw with the right colors.
 
 		map.removeLayer(tile_layer)
+
+		if (dataMode === 'diversity') {
+			tile_layer = diversity_tile_layer;
+		} else {
+			tile_layer = integration_tile_layer;
+		}
+
 		tile_layer.addTo(map);
 		map.removeLayer(tract_layer)
 		tract_layer.addTo(map)

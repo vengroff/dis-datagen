@@ -1,6 +1,7 @@
 class Colormap {
-    constructor(colors) {
-        this.colors = colors
+    constructor(name, colors) {
+        this.colors = colors;
+        this.name = name;
     }
 
     get_color(x) {
@@ -23,7 +24,8 @@ class Colormap {
     }
 };
 
-const YlGn = new Colormap([
+const YlGn = new Colormap('YlGn',
+[
   "rgb(255 255 229)",
   "rgb(254 254 227)",
   "rgb(254 254 226)",
@@ -281,7 +283,8 @@ const YlGn = new Colormap([
   "rgb(0 69 41)",
 ]);
 
-const BuPu = new Colormap([
+const BuPu = new Colormap('BuPu',
+[
   "rgb(247 252 253)",
   "rgb(246 251 252)",
   "rgb(245 250 252)",
@@ -538,7 +541,8 @@ const BuPu = new Colormap([
   "rgb(78 0 76)",
   "rgb(77 0 75)",
 ]);
-const YlGnBu = new Colormap([
+const YlGnBu = new Colormap('YlGnBu',
+[
   "rgb(255 255 217)",
   "rgb(254 254 215)",
   "rgb(253 254 214)",
@@ -795,7 +799,8 @@ const YlGnBu = new Colormap([
   "rgb(8 29 89)",
   "rgb(8 29 88)",
 ]);
-const RdPu = new Colormap([
+const RdPu = new Colormap('RdPu',
+[
   "rgb(255 247 243)",
   "rgb(254 246 242)",
   "rgb(254 245 241)",
@@ -1052,7 +1057,8 @@ const RdPu = new Colormap([
   "rgb(74 0 106)",
   "rgb(73 0 106)",
 ]);
-const YlOrRd = new Colormap([
+const YlOrRd = new Colormap('YlOrRd',
+[
   "rgb(255 255 204)",
   "rgb(255 254 202)",
   "rgb(255 253 201)",
