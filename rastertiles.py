@@ -137,7 +137,7 @@ def main():
                         legend=False,
                         figsize=(256 / 64, 256 / 64),
                         vmin=0.0,
-                        vmax=1.0
+                        vmax=0.8,
                     )
 
                     # Grey out empty tracts.
