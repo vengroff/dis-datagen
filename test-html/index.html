@@ -25,11 +25,34 @@
 			max-height: 100%;
 			background: white;
 		}
-		.title {
+		#titlebar {
+			margin-left: auto;
+            margin-right: auto;
+			width: 80%;
+			position: relative;
+		}
+		#title {
 			text-align: center;
 			font: 600 36px sans-serif;
 			padding: 10px;
 			margin: 10px;
+		}
+		#titlebutton {
+			height: 30px;
+			width: 30px;
+			border: 2px solid rgb(204 204 204);
+			border-radius: 4px;
+			position: absolute;
+			top: 50%;
+			transform: translateY(-45%);
+			right: 0;
+			display: block;
+			text-align: center;
+  			line-height: 30px;
+		}
+		#titlebutton:hover,
+		#titlebutton:focus {
+			background-color: #f4f4f4;
 		}
 		.mapbox {
 			margin-left: auto;
@@ -101,16 +124,24 @@
 </head>
 <body>
 
-  <div class="title">
-	  Diversity in America
+  <script>
+  </script>
+
+  <div id="titlebar">
+  	<div id="title">
+		  Diversity in America
+  	</div>
+	  <a id="titlebutton" role="button">❯</a>
+  	</div>
   </div>
+
   <div class="mapbox">
 	<div id="map" style="width: 100%; height: 100%;"></div>
   </div>
   <div class="scalebox">
-	  No Diversity
+	  <span id="noScaleLabel">No Diversity</span>
 	  <div id="scale"></div>
-	  Maximum Diversity
+	  <span id="maxScaleLabel">Maximum Diversity</span>
   </div>
   <div class="about">
 	  <p>
@@ -446,7 +477,7 @@ const YlGn = new Colormap([
 						if (f.props[prop_total_population] == 0) {
 							return "rgb(192 192 192)";
 						}
- 						return cmap.get_color(f.props.diversity);
+ 						return cmap.get_color(f.props[dataMode]);
  					},
 					stroke: "rgb(192 192 192)",
 					width: 0.5
@@ -653,8 +684,6 @@ const YlGn = new Colormap([
 
 	const scale = document.getElementById("scale");
 
-	console.log(scale);
-
 	for(const color of cmap.get_colors()) {
 
 		const bar = document.createElement('div');
@@ -663,6 +692,44 @@ const YlGn = new Colormap([
 
 		scale.appendChild(bar);
 	}
+
+	  // Keep track of what mode we are in.
+
+  	  var dataMode = "diversity";
+
+  	  function toggleDataMode() {
+  	  	if (dataMode === "diversity") {
+  	  	  dataMode = "integration";
+  	  	} else {
+  	  	  dataMode = "diversity";
+  	  	}
+
+		// Update various labels around the dom.
+
+  	  	var label = dataMode.charAt(0).toUpperCase() + dataMode.slice(1);
+
+  	  	document.getElementById("title").textContent = `${label} in America`;
+  	  	document.getElementById("noScaleLabel").textContent = `No ${label}`;
+  	  	document.getElementById("maxScaleLabel").textContent = `Maximum ${label}`;
+
+  	  	// Remove and re-add the layers to force
+  	  	// a redraw with the right colors.
+
+		map.removeLayer(tile_layer)
+		tile_layer.addTo(map);
+		map.removeLayer(tract_layer)
+		tract_layer.addTo(map)
+		map.removeLayer(boundary_layer)
+		boundary_layer.addTo(map)
+  	  }
+
+	  function titleButtonClick() {
+	  	console.log("CLICK");
+	  	toggleDataMode();
+	  }
+
+	  document.getElementById("titlebutton").onclick=titleButtonClick;
+
 
   </script>
 
