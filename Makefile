@@ -2,7 +2,7 @@ PYTHON = python3.9
 
 LAYERS = boundaries tracts
 
-CMAP = YlGn
+CMAP = YlOrRd
 
 MIN_ZOOM_states-2020 := 2
 MAX_ZOOM_states-2020 := 10
@@ -51,8 +51,12 @@ RASTER_2_MAX_Y := 2
 RASTER_Z := 2 3 4 5 6 7 8
 
 
-GEN_DATA_DIR = ./build/gendata
-RASTER_TILE_DIR = ./build/rastertiles
+GEN_DATA_DIR := ./build/gendata
+DIST_ROOT := ./dist
+RASTER_TILE_DIR := $(DIST_ROOT)/rastertiles
+VECTOR_TILE_DIR := $(DIST_ROOT)/vectortiles
+
+SITE_SRC := ./site-src
 
 # The year to load data for.
 YEAR := 2020
@@ -82,9 +86,51 @@ STATE_GEO_LAYER_FILES := \
 ALL_GEO_LAYER_FILES := $(STATE_GEO_LAYER_FILES) $(CITY_GEO_LAYER_FILES)
 
 
-.PHONY: all clean vtiles rtiles
+.PHONY: all vtiles rtiles site html css js clean distclean
 
 .PRECIOUS: $(GEN_DATA_DIR)/%.geojson
+
+
+all: vtiles rtiles site
+
+# Vector tiles in .pmtiles files.
+vtiles: $(LAYERS:%=$(VECTOR_TILE_DIR)/%-$(YEAR).pmtiles)
+
+# Raster tiles. Consider packaging up in .pmtiles as well.
+rtiles: $(RASTER_Z:%=$(RASTER_TILE_DIR)/$(CMAP)/diversity/%) $(RASTER_Z:%=$(RASTER_TILE_DIR)/$(CMAP)/integration/%)
+
+# The static site.
+site: html css js
+
+html: $(DIST_ROOT)/index.html
+
+css: $(DIST_ROOT)/css/dimap.css
+
+js: $(DIST_ROOT)/js/colors.js
+
+clean:
+	rm -rf $(GEN_DATA_DIR)
+
+distclean: clean
+	rm -rf $(DIST_ROOT)
+
+$(DIST_ROOT)/%.html: $(SITE_SRC)/%.html
+	mkdir -p $(dir $@)
+	cp $< $@
+
+$(DIST_ROOT)/css/%.css: $(SITE_SRC)/css/%.css
+	mkdir -p $(dir $@)
+	cp $< $@
+
+$(DIST_ROOT)/js/%.js: $(SITE_SRC)/js/%.js
+	mkdir -p $(dir $@)
+	cp $< $@
+
+$(GEN_DATA_DIR):
+	mkdir -p $@
+
+$(VECTOR_TILE_DIR):
+	mkdir -p $@
 
 # Generate geometry for tracts, including diversity
 # and integration attributes.
@@ -101,7 +147,7 @@ $(STATE_GEO_LAYER_FILES) &: $(GEN_DATA_DIR)
 
 # Generate city representation points.
 $(CITY_GEO_LAYER_FILES) &:
-	$(PYTHON) -m cities -e 4326 $(GEN_DATA_DIR)
+	$(PYTHON) -m cities -e 4326 $(VECTOR_TILE_DIR)
 
 # Convert a geojson file to a pmtiles file using
 # tippecanoe.
@@ -109,15 +155,17 @@ $(CITY_GEO_LAYER_FILES) &:
 # 	tippecanoe --force -Z$(MIN_ZOOM_$*) -z$(MAX_ZOOM_$*) --projection=EPSG:$(EPSG) -l $* -o $@ $<
 
 # Create a pmtiles file containing geometry layers.
-$(GEN_DATA_DIR)/boundaries-$(YEAR).pmtiles: $(ALL_GEO_LAYER_FILES)
+$(VECTOR_TILE_DIR)/boundaries-$(YEAR).pmtiles: $(ALL_GEO_LAYER_FILES)
+	mkdir -p $(dir $@)
 	tippecanoe --force --drop-rate 0 -Z 2 -z 13 --projection=EPSG:$(EPSG) -o $@ $+
 
 # Create a pmtiles file containing boundary layers.
-$(GEN_DATA_DIR)/tracts-$(YEAR).pmtiles: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
+$(VECTOR_TILE_DIR)/tracts-$(YEAR).pmtiles: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
+	mkdir -p $(dir $@)
 	tippecanoe --force --drop-rate 0 -Z 7 -z 13 --projection=EPSG:$(EPSG) -o $@ $+
 
 # Raster tiles for a given zoom level.
-$(RASTER_TILE_DIR)/%: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
+$(RASTER_TILE_DIR)/$(CMAP)/diversity/% $(RASTER_TILE_DIR)/$(CMAP)/integration/% &: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
 	$(RASTER_TILES) -v -z ${*} -o $(RASTER_TILE_DIR) \
 		-x $(RASTER_${*}_MIN_X) \
 		-X $(RASTER_${*}_MAX_X) \
@@ -125,15 +173,3 @@ $(RASTER_TILE_DIR)/%: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
 		-Y $(RASTER_${*}_MAX_Y) \
 		-c $(CMAP) \
 		$(GEN_DATA_DIR)/tracts-$(YEAR).geojson
-
-all: vtiles rtiles
-
-vtiles: $(LAYERS:%=$(GEN_DATA_DIR)/%-$(YEAR).pmtiles)
-
-rtiles: $(RASTER_Z:%=$(RASTER_TILE_DIR)/%)
-
-clean:
-	rm -rf $(GEN_DATA_DIR)
-
-$(GEN_DATA_DIR):
-	mkdir -p $@

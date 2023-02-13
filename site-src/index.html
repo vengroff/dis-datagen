@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script defer data-domain="datapinions.com" src="https://plausible.io/js/script.js"></script>
+
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	<title>Diversity in America</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+
+	<link rel="stylesheet" href="./css/dimap.css">
+</head>
+
+<body>
+  <div id="titlebar">
+  	<div id="title">
+		  Diversity in America
+  	</div>
+	  <a id="titlebutton" role="button">❯</a>
+  	</div>
+  </div>
+
+  <div class="mapbox">
+	<div id="map" style="width: 100%; height: 100%;"></div>
+  </div>
+  <div class="scalebox">
+	  <span id="noScaleLabel">Less Diverse</span>
+	  <div id="scale"></div>
+	  <span id="maxScaleLabel">More Diverse</span>
+  </div>
+  <div class="about">
+	  <p>
+	  Copyright &copy 2022, Darren Erik Vengroff.</p>
+	  <p>For more details, see this
+		  <a href="https://datapinions.com/diversity-and-integration-in-america-an-interactive-visualization/">
+			  blog post
+		  </a>.
+	  </p>
+	  <p>Based on U.S. Census 2020
+	  <a href="https://www.census.gov/programs-surveys/acs">American Community Survey (ACS)</a>
+		  5-Year Data.</p>
+	  <p>Open source acknowledgements: Analysis done using <a href="https://github.com/vengroff/censusdis">censusdis</a>
+	  and
+	  <a href="https://github.com/vengroff/divintseg">divintseg</a>.
+	  Maps stored using <a href="https://github.com/protomaps/PMTiles">PMTiles</a>.
+	  Map rendered in <a href="https://leafletjs.com/">Leaflet</a>
+	  with <a href="https://github.com/protomaps/protomaps.js">protomaps.js</a>.
+	  </p>
+	  <p>v0.3.0a</p>
+  </div>
+
+
+    <script src="https://unpkg.com/protomaps@1.23.0/dist/protomaps.min.js"></script>
+
+    <script src="./js/colors.js"></script>
+
+	<script type="module">
+		const cmap = YlOrRd;
+
+		// text rendering settings
+		const line_height = 1.7;
+		const text_stroke = "white";
+		const text_fill = "#111"
+
+		const map = L.map('map', {attributionControl: false});
+
+		const diversity_tile_url = `https://storage.googleapis.com/vengroff-map-test/rastertiles/${cmap.name}/diversity/{z}/{x}/{y}.png`;
+		const integration_tile_url = `https://storage.googleapis.com/vengroff-map-test/rastertiles/${cmap.name}/integration/{z}/{x}/{y}.png`;
+
+		const diversity_tile_layer = L.tileLayer(
+			diversity_tile_url,
+			{
+				minZoom: 2,
+				maxZoom: 8,
+			}
+		)
+		const integration_tile_layer = L.tileLayer(
+			diversity_tile_url,
+			{
+				minZoom: 2,
+				maxZoom: 8,
+			}
+		)
+
+		var tile_layer = diversity_tile_layer;
+
+		const prop_total_population = 'B03002_001E';
+
+		let TRACT_PAINT_RULES = [
+			{
+				dataLayer:"tracts2020",
+				symbolizer:new protomaps.PolygonSymbolizer({
+					fill: (z, f) => {
+						if (f.props[prop_total_population] == 0) {
+							return "rgb(192 192 192)";
+						}
+ 						return cmap.get_color(f.props[dataMode] / 0.8);
+ 					},
+					stroke: "rgb(192 192 192)",
+					width: 0.5
+				})
+			}
+		];
+
+		let TRACT_LABEL_RULES = []; // ignore for now
+
+		var tract_layer = protomaps.leafletLayer({
+			url:'https://storage.googleapis.com/vengroff-map-test/tracts-2020.pmtiles',
+			paint_rules:TRACT_PAINT_RULES,
+			label_rules:TRACT_LABEL_RULES,
+			attribution:''
+		})
+
+		const BOUNDARY_PAINT_RULES = [
+			{
+				dataLayer:"states2020",
+				symbolizer:new protomaps.PolygonSymbolizer({
+					fill: "transparent",
+					stroke: "rgb(127 127 127)",
+					width: (z, f) => {
+						if (z >= 6)
+							return 5;
+						if (z >= 5)
+							return 3;
+						return 1;
+					}
+				})
+			}
+		];
+
+		let BOUNDARY_LABEL_RULES = [
+			{
+				dataLayer: "statesrep2020",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width: 3,
+					stroke: text_stroke,
+					lineHeight: line_height,
+					font: (z, f) => {
+						if (z <= 5)
+							return "600 12px sans-serif";
+						if (z <= 7)
+							return "600 16px sans-serif";
+						return "400 20px sans-serif";
+					 }
+				}),
+				minzoom: 5
+			},
+			{
+				dataLayer: "cities10",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width:3,
+					lineHeight: line_height,
+					stroke: text_stroke,
+					font: "400 16px sans-serif"
+				}),
+				minzoom: 5
+			},
+			{
+				dataLayer: "cities9",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width:3,
+					lineHeight: line_height,
+					stroke: text_stroke,
+					font: "400 14px sans-serif"
+				}),
+				minzoom: 5
+			},
+			{
+				dataLayer: "cities8",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width:3,
+					lineHeight: line_height,
+					stroke: text_stroke,
+					font: "400 13px sans-serif"
+				}),
+				minzoom: 6
+			},
+			{
+				dataLayer: "cities7",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width:3,
+					lineHeight: line_height,
+					stroke: text_stroke,
+					font: "400 12px sans-serif"
+				}),
+				minzoom: 8
+			},
+			{
+				dataLayer: "cities6",
+				symbolizer: new protomaps.CenteredTextSymbolizer({
+					label_props:["NAME"],
+					fill: text_fill,
+					width:3,
+					lineHeight: line_height,
+					stroke: text_stroke,
+					font: "400 11px sans-serif"
+				}),
+				minzoom: 9
+			},
+		];
+
+		var boundary_layer = protomaps.leafletLayer({
+			url:'https://storage.googleapis.com/vengroff-map-test/boundaries-2020.pmtiles',
+			paint_rules:BOUNDARY_PAINT_RULES,
+			label_rules:BOUNDARY_LABEL_RULES,
+			attribution:''
+		})
+
+		diversity_tile_layer.addTo(map);
+		tract_layer.addTo(map)
+		boundary_layer.addTo(map)
+
+		map.options.minZoom = 2;
+		map.options.maxZoom = 13;
+
+		map.fitBounds([[22, -128], [52, -68]])
+		map.setMaxBounds(map.getBounds());
+
+	// Pop-up for tracts.
+
+	const census_prop_names = {
+		B03002_001E: "Total Population",
+		B03002_003E: "Non-Hispanic White",
+		B03002_004E: "Non-Hispanic Black or African American",
+		B03002_005E: "Non-Hispanic American Indian and Alaska Native",
+		B03002_006E: "Non-Hispanic Asian",
+		B03002_007E: "Non-Hispanic Native Hawaiian and Other Pacific Islander",
+		B03002_008E: "Non-Hispanic Some Other Race",
+		B03002_010E: "Non-Hispanic Two or more races: Two races including Some other race",
+		B03002_011E: "Non-Hispanic Two or more races: Two races excluding Some other race, and three or more races",
+
+		B03002_013E: "Hispanic or Latino White",
+		B03002_014E: "Hispanic or Latino Black or African American",
+		B03002_015E: "Hispanic or Latino American Indian and Alaska Native",
+		B03002_016E: "Hispanic or Latino Asian",
+		B03002_017E: "Hispanic or Latino Native Hawaiian and Other Pacific Islander",
+		B03002_018E: "Hispanic or Latino Some Other Race",
+		B03002_020E: "Hispanic or Latino Two or more races: Two races including Some other race",
+		B03002_021E: "Hispanic or Latino Two or more races: Two races excluding Some other race, and three or more races",
+
+	}
+
+	function numberWithCommas(x) {
+		return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	}
+
+	function on_map_click(ev) {
+		let wrapped = map.wrapLatLng(ev.latlng);
+
+		let resultsBySourceName = tract_layer.queryFeatures(wrapped.lng, wrapped.lat);
+
+		for (var [sourceName, results] of resultsBySourceName) {
+		  if(results.length > 0) {
+			  for (var result of results) {
+				var props = result.feature.props;
+
+				var content = `<div class="popup-head">Census Tract ${props['TRACT']} in ${props['COUNTY_NAME']}</div>`;
+
+				content = content + `<div class="popup-di""><div>${census_prop_names[prop_total_population]}</div><div>${numberWithCommas(props[prop_total_population])}</div></div>`;
+				content = content + `<div class="popup-di"><div>Diversity</div><div>${Math.round(100 * props['diversity'])}%</div></div>`;
+				content = content + `<div class="popup-di" style="margin-bottom: 10px"><div>Integration</div><div>${Math.round(100 * props['integration'])}%</div></div>`;
+
+				for (const prop in props) {
+					if (prop !== prop_total_population) {
+						if (prop in census_prop_names) {
+							if (props[prop] > 0) {
+								content = content + `<div class="popup-row"><div>${census_prop_names[prop]}</div><div>${numberWithCommas(props[prop])}</div></div>`;
+							}
+						}
+					}
+				}
+			  }
+
+			L.popup()
+			  .setLatLng(ev.latlng)
+			  .setContent(
+				'<div class="popup">' +
+				  content +
+				  "</div>"
+			  )
+			  .openOn(map);
+			}
+		}
+	}
+
+	map.on("click", on_map_click)
+
+	// Fill in the color scale.
+
+	const scale = document.getElementById("scale");
+
+	for(const color of cmap.get_colors()) {
+
+		const bar = document.createElement('div');
+		bar.className = "colorbar";
+		bar.style.backgroundColor = color;
+
+		scale.appendChild(bar);
+	}
+
+	  // Keep track of what mode we are in.
+
+  	  var dataMode = "diversity";
+
+  	  function toggleDataMode() {
+  	  	if (dataMode === "diversity") {
+  	  	  dataMode = "integration";
+  	  	} else {
+  	  	  dataMode = "diversity";
+  	  	}
+
+		// Update various labels around the dom.
+
+  	  	var label = dataMode.charAt(0).toUpperCase() + dataMode.slice(1);
+		var label_alt = 'Integrated';
+		if (dataMode === 'diversity') {
+			label_alt = 'Diverse';
+		}
+
+  	  	document.getElementById("title").textContent = `${label} in America`;
+  	  	document.getElementById("noScaleLabel").textContent = `Less ${label_alt}`;
+  	  	document.getElementById("maxScaleLabel").textContent = `More ${label_alt}`;
+
+  	  	// Remove and re-add the layers to force
+  	  	// a redraw with the right colors.
+
+		map.removeLayer(tile_layer)
+
+		if (dataMode === 'diversity') {
+			tile_layer = diversity_tile_layer;
+		} else {
+			tile_layer = integration_tile_layer;
+		}
+
+		tile_layer.addTo(map);
+		map.removeLayer(tract_layer)
+		tract_layer.addTo(map)
+		map.removeLayer(boundary_layer)
+		boundary_layer.addTo(map)
+  	  }
+
+	  function titleButtonClick() {
+	  	console.log("CLICK");
+	  	toggleDataMode();
+	  }
+
+	  document.getElementById("titlebutton").onclick=titleButtonClick;
+  </script>
+
+</body>
+</html>

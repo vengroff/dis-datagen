@@ -126,49 +126,54 @@ def main():
             if len(gdf_clipped.index) > 0:
                 # Otherwise we clipped in all, so no need for a tile.
 
-                ax = gdf_clipped.plot(
-                    'diversity',
-                    cmap=args.cmap,
-                    legend=False,
-                    figsize=(256 / 64, 256 / 64),
-                    vmin=0.0,
-                    vmax=1.0
-                )
+                plot_vars = [
+                    'diversity', 'integration'
+                ]
 
-                # Grey out empty tracts.
-                gdf_clipped_empty = gdf_clipped[gdf_clipped[args.total_population] == 0]
-
-                if len(gdf_clipped_empty.index) > 0:
-                    ax = gdf_clipped_empty.plot(
-                        color='#C0C0C0',
+                for plot_var in plot_vars:
+                    ax = gdf_clipped.plot(
+                        plot_var,
+                        cmap=args.cmap,
                         legend=False,
                         figsize=(256 / 64, 256 / 64),
-                        ax=ax,
+                        vmin=0.0,
+                        vmax=1.0
                     )
 
-                ax.set_xlim(x_lim_3857[0], x_lim_3857[1])
-                ax.set_ylim(y_lim_3857[0], y_lim_3857[1])
+                    # Grey out empty tracts.
+                    gdf_clipped_empty = gdf_clipped[gdf_clipped[args.total_population] == 0]
 
-                ax.tick_params(
-                    left=False,
-                    right=False,
-                    bottom=False,
-                    labelleft=False,
-                    labelbottom=False,
-                )
+                    if len(gdf_clipped_empty.index) > 0:
+                        ax = gdf_clipped_empty.plot(
+                            color='#C0C0C0',
+                            legend=False,
+                            figsize=(256 / 64, 256 / 64),
+                            ax=ax,
+                        )
 
-                ax.axis('off')
+                    ax.set_xlim(x_lim_3857[0], x_lim_3857[1])
+                    ax.set_ylim(y_lim_3857[0], y_lim_3857[1])
 
-                tile_dir = pathlib.Path(args.output_dir) / f'{z}' / f'{x}'
-                tile_dir.mkdir(parents=True, exist_ok=True)
-                tile_file = tile_dir / f'{y}.png'
+                    ax.tick_params(
+                        left=False,
+                        right=False,
+                        bottom=False,
+                        labelleft=False,
+                        labelbottom=False,
+                    )
 
-                if verbose:
-                    print(f"Saving to {tile_file}.")
+                    ax.axis('off')
 
-                plt.savefig(tile_file, bbox_inches='tight', pad_inches=0.0, dpi=64)
+                    tile_dir = pathlib.Path(args.output_dir) / args.cmap / plot_var / f'{z}' / f'{x}'
+                    tile_dir.mkdir(parents=True, exist_ok=True)
+                    tile_file = tile_dir / f'{y}.png'
 
-                plt.close()
+                    if verbose:
+                        print(f"Saving to {tile_file}.")
+
+                    plt.savefig(tile_file, bbox_inches='tight', pad_inches=0.0, dpi=64)
+
+                    plt.close()
 
 
 if __name__ == "__main__":
