@@ -11,7 +11,7 @@ def main():
 
     args = parser.parse_args()
 
-    print(f"const {args.cmap} = new Colormap([")
+    print(f"const {args.cmap} = new Colormap('{args.cmap}',\n[")
 
     cmap = mpl.colormaps[args.cmap]
 
