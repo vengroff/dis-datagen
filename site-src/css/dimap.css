@@ -89,7 +89,7 @@ html, body {
     height: 100%;
 }
 .popup {
-    max-height: 400px;
+    max-height: 60%;
     overflow-y: scroll;
     padding-right:32px;
     font: 400 12px sans-serif;
