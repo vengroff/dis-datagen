@@ -32,7 +32,7 @@ def main():
     parser.add_argument('-c', '--cmap', type=str, default='Greens')  # try also 'hot'
 
     parser.add_argument(
-        '-t', '--total-population', default='B03002_001E', type=str,
+        '-t', '--total-population', default='P2_001N', type=str,
         help='Total population variable, so we can check for empty tracts.'
     )
 
