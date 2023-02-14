@@ -61,10 +61,21 @@ html, body {
 .about {
     width: 80%;
     margin: 40px auto;
-    font: 400 10px sans-serif;
+    font: 400 9px sans-serif;
+}
+.about .copy {
+    margin-top: 10px;
+    margin-bottom: 10px
+}
+.about h1 {
+    font: 600 10px sans-serif;
+    text-decoration: underline;
+    margin-top: 10px;
+    margin-bottom: 4px
 }
 .about p {
-    margin: 4px;
+    margin-top: 2px;
+    margin-bottom: 1px
 }
 #scale {
     display: flex;
