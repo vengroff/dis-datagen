@@ -50,6 +50,7 @@ RASTER_2_MAX_Y := 2
 
 RASTER_Z := 2 3 4 5 6 7 8
 
+FAVICON_SIZES := 512 270 192 180 32
 
 GEN_DATA_DIR := ./build/gendata
 DIST_ROOT := ./dist
@@ -86,7 +87,7 @@ STATE_GEO_LAYER_FILES := \
 ALL_GEO_LAYER_FILES := $(STATE_GEO_LAYER_FILES) $(CITY_GEO_LAYER_FILES)
 
 
-.PHONY: all vtiles rtiles site html css js clean distclean
+.PHONY: all vtiles rtiles site html favicon css js clean distclean
 
 .PRECIOUS: $(GEN_DATA_DIR)/%.geojson
 
@@ -100,9 +101,11 @@ vtiles: $(LAYERS:%=$(VECTOR_TILE_DIR)/%-$(YEAR).pmtiles)
 rtiles: $(RASTER_Z:%=$(RASTER_TILE_DIR)/$(CMAP)/diversity/%) $(RASTER_Z:%=$(RASTER_TILE_DIR)/$(CMAP)/integration/%)
 
 # The static site.
-site: html css js
+site: html favicon css js
 
 html: $(DIST_ROOT)/index.html
+
+favicon: $(FAVICON_SIZES:%=$(DIST_ROOT)/favicon%.png)
 
 css: $(DIST_ROOT)/css/dimap.css
 
@@ -115,6 +118,10 @@ distclean: clean
 	rm -rf $(DIST_ROOT)
 
 $(DIST_ROOT)/%.html: $(SITE_SRC)/%.html
+	mkdir -p $(dir $@)
+	cp $< $@
+
+$(DIST_ROOT)/favicon%.png: $(SITE_SRC)/favicon%.png
 	mkdir -p $(dir $@)
 	cp $< $@
 
