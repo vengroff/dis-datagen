@@ -32,7 +32,7 @@ def main():
     parser.add_argument('-c', '--cmap', type=str, default='Greens')  # try also 'hot'
 
     parser.add_argument(
-        '-t', '--total-population', default='B03002_001E', type=str,
+        '-t', '--total-population', default='P2_001N', type=str,
         help='Total population variable, so we can check for empty tracts.'
     )
 
@@ -79,14 +79,8 @@ def main():
     original_crs = gdf.crs
     gdf = gdf.to_crs(epsg=3857)
 
-    if verbose:
-        print(f"epsg:3857 total bounds of input: {gdf.geometry.total_bounds}")
-
     for x in range(min_x, max_x + 1, 1):
         for y in range(min_y, max_y + 1, 1):
-            if verbose:
-                print(f"Processing {z}/{x}/{y}.")
-
             x_lim_3857 = (
                              EPSG_3857_X_MIN + x * meters_per_tile_x,
                              EPSG_3857_X_MIN + (x + 1) * meters_per_tile_x
@@ -95,13 +89,6 @@ def main():
                 EPSG_3857_Y_MAX - (y + 1) * meters_per_tile_y,
                 EPSG_3857_Y_MAX - y * meters_per_tile_y
             )
-
-            if verbose:
-                print(
-                    "Tile bounds in epsg:3857: "
-                    f"({x_lim_3857[0]:.2f}, {y_lim_3857[0]:.2f}, "
-                    f"{x_lim_3857[1]:.2f}, {y_lim_3857[1]:.2f})"
-                )
 
             gs_tile = gpd.GeoSeries(
                 [
@@ -115,13 +102,7 @@ def main():
                 ],
             ).set_crs(epsg=3857).to_crs(original_crs)
 
-            if verbose:
-                print(f"Tile bounds in {gs_tile.crs}: {gs_tile.iloc[0]}")
-
             gdf_clipped = gdf.cx[x_lim_3857[0]:x_lim_3857[1], y_lim_3857[0]:y_lim_3857[1]]
-
-            if verbose:
-                print(f"EPSG:3857 bounds of input clipped to tile: {gdf_clipped.geometry.total_bounds}")
 
             if len(gdf_clipped.index) > 0:
                 # Otherwise we clipped in all, so no need for a tile.
@@ -141,7 +122,7 @@ def main():
                     )
 
                     # Grey out empty tracts.
-                    gdf_clipped_empty = gdf_clipped[gdf_clipped[args.total_population] == 0]
+                    gdf_clipped_empty = gdf_clipped[gdf_clipped[args.total_population].isna()]
 
                     if len(gdf_clipped_empty.index) > 0:
                         ax = gdf_clipped_empty.plot(
@@ -167,9 +148,6 @@ def main():
                     tile_dir = pathlib.Path(args.output_dir) / args.cmap / plot_var / f'{z}' / f'{x}'
                     tile_dir.mkdir(parents=True, exist_ok=True)
                     tile_file = tile_dir / f'{y}.png'
-
-                    if verbose:
-                        print(f"Saving to {tile_file}.")
 
                     plt.savefig(tile_file, bbox_inches='tight', pad_inches=0.0, dpi=64)
 

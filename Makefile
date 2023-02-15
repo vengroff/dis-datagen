@@ -68,7 +68,7 @@ EPSG := 4326
 # data for a layer.
 GENDATA_PY := gendata.py
 GENDATA := $(PYTHON) -m $(HE) $(basename $(GENDATA_PY))
-GENDATA_FLAGS := -y $(YEAR) -e $(EPSG)
+GENDATA_FLAGS := -v -y $(YEAR) -e $(EPSG)
 
 RASTER_TILES := $(PYTHON) -m rastertiles
 
@@ -137,7 +137,8 @@ $(VECTOR_TILE_DIR):
 $(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GEN_DATA_DIR)
 	$(GENDATA) $(GENDATA_FLAGS) -o $@ tracts
 
-$(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GENDATA_PY)
+# Rebuild if the script changes.
+# $(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GENDATA_PY)
 
 # Generate state bounds and representative points.
 $(STATE_GEO_LAYER_FILES) &: $(GEN_DATA_DIR)
@@ -147,7 +148,7 @@ $(STATE_GEO_LAYER_FILES) &: $(GEN_DATA_DIR)
 
 # Generate city representation points.
 $(CITY_GEO_LAYER_FILES) &:
-	$(PYTHON) -m cities -e 4326 $(VECTOR_TILE_DIR)
+	$(PYTHON) -m cities -e 4326 $(GEN_DATA_DIR)
 
 # Convert a geojson file to a pmtiles file using
 # tippecanoe.
@@ -173,3 +174,4 @@ $(RASTER_TILE_DIR)/$(CMAP)/diversity/% $(RASTER_TILE_DIR)/$(CMAP)/integration/% 
 		-Y $(RASTER_${*}_MAX_Y) \
 		-c $(CMAP) \
 		$(GEN_DATA_DIR)/tracts-$(YEAR).geojson
+	touch $@
