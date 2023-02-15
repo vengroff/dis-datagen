@@ -89,23 +89,20 @@ html, body {
     height: 100%;
 }
 .popup {
-    max-height: 60%;
+    max-height: 240px;
     overflow-y: scroll;
     padding-right:32px;
-    font: 400 12px sans-serif;
+    font: 400 11px sans-serif;
 }
 .popup-head {
-    font: 600 16px sans-serif;
+    font: 600 14px sans-serif;
     margin-bottom: 10px;
 }
 .popup-di {
-    font: 600 14px sans-serif;
+    font: 600 13px sans-serif;
     margin-top: 4px;
     display: flex;
     justify-content: space-between;
-}
-.popup-row div {
-    max-width: 80%;
 }
 .popup-row {
     margin-top: 3px;

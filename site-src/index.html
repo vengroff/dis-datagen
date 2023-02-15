@@ -34,8 +34,8 @@
   </div>
   <div class="about">
 	  <p class="copy">Copyright &copy 2023, Darren Erik Vengroff.</p>
-	  <h1>Additional Details</h1>
-	  <p><b>Version:</b> 0.4.0a</p>
+	  <h1>About Diversity and Integration in America</h1>
+	  <p><b>Version:</b> 0.4.1a</p>
 	  <p><b>Background:</b> See this
 		  <a href="https://datapinions.com/diversity-and-integration-in-america-an-interactive-visualization/">
 			  blog post
@@ -87,8 +87,8 @@
 
 		const map = L.map('map', {attributionControl: false});
 
-		const diversity_tile_url = `https://storage.googleapis.com/vengroff-map-test/rastertiles/${cmap.name}/diversity/{z}/{x}/{y}.png`;
-		const integration_tile_url = `https://storage.googleapis.com/vengroff-map-test/rastertiles/${cmap.name}/integration/{z}/{x}/{y}.png`;
+		const diversity_tile_url = `./rastertiles/${cmap.name}/diversity/{z}/{x}/{y}.png`;
+		const integration_tile_url = `./rastertiles/${cmap.name}/integration/{z}/{x}/{y}.png`;
 
 		const diversity_tile_layer = L.tileLayer(
 			diversity_tile_url,
@@ -114,7 +114,10 @@
 				dataLayer:"tracts2020",
 				symbolizer:new protomaps.PolygonSymbolizer({
 					fill: (z, f) => {
-						if (f.props[prop_total_population] == 0) {
+						if (
+							(typeof(f.props[prop_total_population]) != 'number') ||
+						 	(f.props[prop_total_population] == 0)
+						 ) {
 							return "rgb(192 192 192)";
 						}
  						return cmap.get_color(f.props[dataMode] / 0.8);
@@ -128,7 +131,7 @@
 		let TRACT_LABEL_RULES = []; // ignore for now
 
 		var tract_layer = protomaps.leafletLayer({
-			url:'https://storage.googleapis.com/vengroff-map-test/vectortiles/tracts-2020.pmtiles',
+			url:'./vectortiles/tracts-2020.pmtiles',
 			paint_rules:TRACT_PAINT_RULES,
 			label_rules:TRACT_LABEL_RULES,
 			attribution:''
@@ -233,7 +236,7 @@
 		];
 
 		var boundary_layer = protomaps.leafletLayer({
-			url:'https://storage.googleapis.com/vengroff-map-test/boundaries-2020.pmtiles',
+			url:'./vectortiles/boundaries-2020.pmtiles',
 			paint_rules:BOUNDARY_PAINT_RULES,
 			label_rules:BOUNDARY_LABEL_RULES,
 			attribution:''
@@ -362,13 +365,18 @@
 
 				var content = `<div class="popup-head">Census Tract ${props['TRACT']} in ${props['COUNTY_NAME']}</div>`;
 
-				content = content + `<div class="popup-di""><div>${census_prop_names[prop_total_population]}</div><div>${numberWithCommas(props[prop_total_population])}</div></div>`;
+				var total_pop = props[prop_total_population]
+				if (typeof(total_pop) != 'number') {
+					total_pop = 0;
+				}
+
+				content = content + `<div class="popup-di""><div>${census_prop_names[prop_total_population]}</div><div>${numberWithCommas(total_pop)}</div></div>`;
 				content = content + `<div class="popup-di"><div>Diversity</div><div>${Math.round(100 * props['diversity'])}%</div></div>`;
 				content = content + `<div class="popup-di" style="margin-bottom: 10px"><div>Integration</div><div>${Math.round(100 * props['integration'])}%</div></div>`;
 
 				// Sort population props by value.
 				var pop_items = Object.keys(census_prop_names).filter(
-					(prop) => (prop != prop_total_population) && (typeof(props[prop]) == 'number') &&( props[prop] > 0)
+					(prop) => (prop != prop_total_population) && (typeof(props[prop]) == 'number') && (props[prop] > 0)
 				).map(
 					(prop) => [prop, props[prop]]
 				).sort((a, b) => b[1] - a[1]);
