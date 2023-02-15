@@ -125,8 +125,6 @@ def main():
                     gdf_clipped_empty = gdf_clipped[gdf_clipped[args.total_population].isna()]
 
                     if len(gdf_clipped_empty.index) > 0:
-                        if verbose:
-                            print(f"Found {len(gdf_clipped_empty.index)} empty tracts.")
                         ax = gdf_clipped_empty.plot(
                             color='#C0C0C0',
                             legend=False,
