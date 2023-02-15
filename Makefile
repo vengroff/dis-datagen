@@ -174,3 +174,4 @@ $(RASTER_TILE_DIR)/$(CMAP)/diversity/% $(RASTER_TILE_DIR)/$(CMAP)/integration/% 
 		-Y $(RASTER_${*}_MAX_Y) \
 		-c $(CMAP) \
 		$(GEN_DATA_DIR)/tracts-$(YEAR).geojson
+	touch $@
