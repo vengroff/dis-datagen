@@ -9,7 +9,8 @@ import divintseg as dis
 import pandas as pd
 import geopandas as gpd
 import numpy as np
-from censusdis.states import ALL_STATES_DC_AND_PR, STATE_NAMES_FROM_IDS, STATE_NY, STATE_NJ, STATE_CT
+from censusdis.states import ALL_STATES_DC_AND_PR, STATE_NAMES_FROM_IDS
+from censusdis.states import STATE_AK, STATE_WY, STATE_NY, STATE_NJ, STATE_CT
 
 verbose = False
 
@@ -132,11 +133,108 @@ def save_city_bounds(year: int, epsg: int, filename: str, rep_filename: Optional
         gdf_cities.to_file(rep_filename)
 
 
+def hl_variable(variable: str) -> str:
+    """
+    Convert to hispanic or latino variable name.
+
+    Parameters
+    ----------
+    variable
+        Original variable name.
+    Returns
+    -------
+        Name of derived variable we will use for non-Hispanic or
+        Latino version of the concept measured by this variable.
+    """
+    if not variable.startswith("P1_"):
+        raise ValueError("Must be a P1 variable.")
+
+    # See https://api.census.gov/data/2020/dec/pl/groups/P1.html
+    # and https://api.census.gov/data/2020/dec/pl/groups/P2.html.
+    var_num = int(variable[-4:-1])
+    var_num = var_num + 2
+
+    return f'hl_{var_num:03d}N'
+
+
+def nhl_variable_for_hl_variable(hl_var: str) -> str:
+    if not hl_var.startswith('hl_'):
+        raise ValueError("Must be an hl variable.")
+
+    return hl_var.replace("hl_", "P2_")
+
+
+def all_state_data(year: int, group1: str, group2: str, total_col: str):
+    """Generate all the state data, one data frame per state."""
+    for state in ALL_STATES_DC_AND_PR:
+        if verbose:
+            print(f"Processing {STATE_NAMES_FROM_IDS[state]}")
+
+        # If we load all the variables at once across
+        # both groups the server side sometimes has issues.
+        # So we download the groups separately and then merge.
+        if verbose:
+            print(f"Downloading {group1}")
+
+        df_block_for_state_group1 = ced.download(
+            DATASET,
+            year,
+            leaves_of_group=group1,
+            state=state,
+            block="*",
+        )
+
+        if verbose:
+            print(f"Downloading {group2}")
+
+        df_block_for_state_group2 = ced.download(
+            DATASET,
+            year,
+            [total_col],
+            leaves_of_group=group2,
+            state=state,
+            block="*",
+        )
+
+        df_block_for_state = df_block_for_state_group2.merge(
+            df_block_for_state_group1,
+            on=["STATE", "COUNTY", "TRACT", "BLOCK"],
+        )
+
+        if verbose:
+            print(f"Downladed {len(df_block_for_state.index)} rows.")
+
+        group1_leaves = [var for var in df_block_for_state.columns if var.startswith(group1)]
+
+        # Compute the NHL version of each leaf.
+        for var in group1_leaves:
+            hl_var = hl_variable(var)
+            nhl_var = nhl_variable_for_hl_variable(hl_var)
+
+            df_block_for_state[hl_var] = df_block_for_state[var] - df_block_for_state[nhl_var]
+
+        df_block_for_state = df_block_for_state.drop(group1_leaves, axis='columns')
+
+        hl_leaves = [var for var in df_block_for_state.columns if var.startswith('hl')]
+        nhl_leaves = [nhl_variable_for_hl_variable(var) for var in hl_leaves]
+
+        total_hl_and_non_hl = df_block_for_state[hl_leaves + nhl_leaves].sum(axis='columns')
+        if not (df_block_for_state[total_col].equals(total_hl_and_non_hl)):
+            raise ValueError(
+                "These values should be the same! "
+                "Something went wrong in computing race counts for Hispanic or Latino population."
+            )
+
+        yield df_block_for_state
+
+
 # From https://github.com/vengroff/censusdis/blob/main/notebooks/Nationwide%20Diversity%20and%20Integration.ipynb
 def tract_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
 
-    group = "P2"
-    total_col = f'{group}_001N'
+    group1 = "P1"
+    group2 = "P2"
+    total_col = f'{group2}_001N'
+    hl_col_in_group2 = f'{group2}_002N'
 
     # Download the data
 
@@ -146,30 +244,15 @@ def tract_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
     # the error and we'll correct it ASAP.  Sorry for
     # the inconvenience." So go state by state and
     # concat them.
-    df_block_per_state = []
-
-    for state in ALL_STATES_DC_AND_PR:
-        if verbose:
-            print(f"Processing {STATE_NAMES_FROM_IDS[state]}")
-
-        df_block_for_state = ced.download(
-            DATASET,
-            year,
-            [total_col],
-            leaves_of_group=group,
-            state=state,
-            block="*",
-        )
-        if verbose:
-            print(f"Downladed {len(df_block_for_state.index)} rows.")
-        df_block_per_state.append(df_block_for_state)
-
-    df_block = pd.concat(df_block_per_state)
+    df_block = pd.concat(all_state_data(year, group1, group2, total_col))
 
     if verbose:
-        print(f"Downloaded a total of {len(df_block.index)} rows in {len(df_block_for_state)} state batches.")
+        print(f"Downloaded a total of {len(df_block.index)} rows.")
 
-    leaf_cols = [col for col in df_block.columns if col.startswith(group) and col != total_col]
+    leaf_cols = [
+        col for col in df_block.columns
+        if col.startswith(group2) and col not in [total_col, hl_col_in_group2] or col.startswith('hl')
+    ]
 
     # Compute diversity and integration
 
