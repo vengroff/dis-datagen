@@ -259,13 +259,61 @@
 		map.fitBounds([[22, -128], [52, -68]])
 		map.setMaxBounds(map.getBounds());
 
+	  // Keep track of what mode we are in.
+
+  	  var dataMode = "diversity";
+
+  	  function toggleDataMode() {
+  	  	if (dataMode === "diversity") {
+  	  	  dataMode = "integration";
+  	  	} else {
+  	  	  dataMode = "diversity";
+  	  	}
+
+		// Update various labels around the dom.
+
+  	  	var label = dataMode.charAt(0).toUpperCase() + dataMode.slice(1);
+		var label_alt = 'Integrated';
+		if (dataMode === 'diversity') {
+			label_alt = 'Diverse';
+		}
+
+  	  	document.getElementById("title").textContent = `${label} in America`;
+  	  	document.getElementById("noScaleLabel").textContent = `Less ${label_alt}`;
+  	  	document.getElementById("maxScaleLabel").textContent = `More ${label_alt}`;
+
+  	  	// Remove and re-add the layers to force
+  	  	// a redraw with the right colors.
+
+		map.removeLayer(tile_layer)
+
+		if (dataMode == 'integration') {
+			tile_layer = integration_tile_layer;
+		} else {
+			tile_layer = diversity_tile_layer;
+		}
+
+		tile_layer.addTo(map);
+		map.removeLayer(tract_layer)
+		tract_layer.addTo(map)
+		map.removeLayer(boundary_layer)
+		boundary_layer.addTo(map)
+  	  }
+
+
 		// Does the URL tell us to move somewhere else?
 		const url = window.location.href;
 		if (url.includes('?')) {
 			var vars = {};
 			for (var assignment of url.split('?')[1].split('&')) {
 				const split = assignment.split('=');
-				vars[split[0]] = parseFloat(split[1]);
+				if (split.length == 2) {
+					if (split[0] === 'd') {
+						vars[split[0]] = split[1];
+					} else {
+						vars[split[0]] = parseFloat(split[1]);
+					}
+				}
 			}
 
 			if(('n' in vars) && ('s' in vars) && ('e' in vars) && ('w' in vars)) {
@@ -273,6 +321,10 @@
 					[vars['s'], vars['w']],
 					[vars['n'], vars['e']]
 				]);
+			}
+
+			if (('d' in vars) && (vars['d'] === 'i')) {
+				toggleDataMode();
 			}
 		}
 
@@ -289,7 +341,13 @@
 			const url = window.location.href;
 			const baseUrl = url.split('?')[0];
 
-			const newUrl = `${baseUrl}?&n=${north}&s=${south}&e=${east}&w=${west}`;
+			var layer = 'd';
+
+			if (dataMode === 'integration') {
+				layer = 'i';
+			}
+
+			const newUrl = `${baseUrl}?&n=${north}&s=${south}&e=${east}&w=${west}&d=${layer}`;
 			const newTitle = "Diversity in America";
 			const newState = { additionalInformation: 'Zoomed or moved.' };
 
@@ -462,47 +520,6 @@
 
 		scale.appendChild(bar);
 	}
-
-	  // Keep track of what mode we are in.
-
-  	  var dataMode = "diversity";
-
-  	  function toggleDataMode() {
-  	  	if (dataMode === "diversity") {
-  	  	  dataMode = "integration";
-  	  	} else {
-  	  	  dataMode = "diversity";
-  	  	}
-
-		// Update various labels around the dom.
-
-  	  	var label = dataMode.charAt(0).toUpperCase() + dataMode.slice(1);
-		var label_alt = 'Integrated';
-		if (dataMode === 'diversity') {
-			label_alt = 'Diverse';
-		}
-
-  	  	document.getElementById("title").textContent = `${label} in America`;
-  	  	document.getElementById("noScaleLabel").textContent = `Less ${label_alt}`;
-  	  	document.getElementById("maxScaleLabel").textContent = `More ${label_alt}`;
-
-  	  	// Remove and re-add the layers to force
-  	  	// a redraw with the right colors.
-
-		map.removeLayer(tile_layer)
-
-		if (dataMode === 'diversity') {
-			tile_layer = diversity_tile_layer;
-		} else {
-			tile_layer = integration_tile_layer;
-		}
-
-		tile_layer.addTo(map);
-		map.removeLayer(tract_layer)
-		tract_layer.addTo(map)
-		map.removeLayer(boundary_layer)
-		boundary_layer.addTo(map)
-  	  }
 
 	  function titleButtonClick() {
 	  	toggleDataMode();
