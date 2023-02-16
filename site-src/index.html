@@ -7,7 +7,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	
-	<title>Diversity in America</title>
+	<title>Diversity and Integration in America</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
@@ -25,7 +25,7 @@
 <body>
   <div id="titlebar">
   	<div id="title">
-		  Diversity in America
+		  Diversity and Integration in America
   	</div>
 	  <a id="titlebutton" role="button">❯</a>
   	</div>
@@ -348,7 +348,7 @@
 			}
 
 			const newUrl = `${baseUrl}?&n=${north}&s=${south}&e=${east}&w=${west}&d=${layer}`;
-			const newTitle = "Diversity in America";
+			const newTitle = "Diversity and Integration in America";
 			const newState = { additionalInformation: 'Zoomed or moved.' };
 
 			window.history.replaceState(newState, newTitle, newUrl);
@@ -449,6 +449,70 @@
 		P2_070N: "Five Races: White; American Indian and Alaska Native; Asian; Native Hawaiian and Other Pacific Islander; Some Other Race",
 		P2_071N: "Five Races: Black or African American; American Indian and Alaska Native; Asian; Native Hawaiian and Other Pacific Islander; Some Other Race",
 		P2_073N: "Six Races: White; Black or African American; American Indian and Alaska Native; Asian; Native Hawaiian and Other Pacific Islander; Some Other Race",
+
+		hl_005N: "Hispanic or Latino; White alone",
+		hl_006N: "Hispanic or Latino; Black or African American alone",
+		hl_007N: "Hispanic or Latino; American Indian and Alaska Native alone",
+		hl_008N: "Hispanic or Latino; Asian alone",
+		hl_009N: "Hispanic or Latino; Native Hawaiian and Other Pacific Islander alone",
+		hl_010N: "Hispanic or Latino; Some Other Race alone",
+		hl_013N: "Hispanic or Latino; Two Races: White; Black or African American",
+		hl_014N: "Hispanic or Latino; Two Races: White; American Indian and Alaska Native",
+		hl_015N: "Hispanic or Latino; Two Races: White; Asian",
+		hl_016N: "Hispanic or Latino; Two Races: White; Native Hawaiian and Other Pacific Islander",
+		hl_017N: "Hispanic or Latino; Two Races: White; Some Other Race",
+		hl_018N: "Hispanic or Latino; Two Races: Black or African American; American Indian and Alaska Native",
+		hl_019N: "Hispanic or Latino; Two Races: Black or African American; Asian",
+		hl_020N: "Hispanic or Latino; Two Races: Black or African American; Native Hawaiian and Other Pacific Islander",
+		hl_021N: "Hispanic or Latino; Two Races: Black or African American; Some Other Race",
+		hl_022N: "Hispanic or Latino; Two Races: American Indian and Alaska Native; Asian",
+		hl_023N: "Hispanic or Latino; Two Races: American Indian and Alaska Native; Native Hawaiian and Other Pacific Islander",
+		hl_024N: "Hispanic or Latino; Two Races: American Indian and Alaska Native; Some Other Race",
+		hl_025N: "Hispanic or Latino; Two Races: Asian; Native Hawaiian and Other Pacific Islander",
+		hl_026N: "Hispanic or Latino; Two Races: Asian; Some Other Race",
+		hl_027N: "Hispanic or Latino; Two Races: Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_029N: "Hispanic or Latino; Three Races: White; Black or African American; American Indian and Alaska Native",
+		hl_030N: "Hispanic or Latino; Three Races: White; Black or African American; Asian",
+		hl_031N: "Hispanic or Latino; Three Races: White; Black or African American; Native Hawaiian and Other Pacific Islander",
+		hl_032N: "Hispanic or Latino; Three Races: White; Black or African American; Some Other Race",
+		hl_033N: "Hispanic or Latino; Three Races: White; American Indian and Alaska Native; Asian",
+		hl_034N: "Hispanic or Latino; Three Races: White; American Indian and Alaska Native; Native Hawaiian and Other Pacific Islander",
+		hl_035N: "Hispanic or Latino; Three Races: White; American Indian and Alaska Native; Some Other Race",
+		hl_036N: "Hispanic or Latino; Three Races: White; Asian; Native Hawaiian and Other Pacific Islander",
+		hl_037N: "Hispanic or Latino; Three Races: White; Asian; Some Other Race",
+		hl_038N: "Hispanic or Latino; Three Races: White; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_039N: "Hispanic or Latino; Three Races: Black or African American; American Indian and Alaska Native; Asian",
+		hl_040N: "Hispanic or Latino; Three Races: Black or African American; American Indian and Alaska Native; Native Hawaiian and Other Pacific Islander",
+		hl_041N: "Hispanic or Latino; Three Races: Black or African American; American Indian and Alaska Native; Some Other Race",
+		hl_042N: "Hispanic or Latino; Three Races: Black or African American; Asian; Native Hawaiian and Other Pacific Islander",
+		hl_043N: "Hispanic or Latino; Three Races: Black or African American; Asian; Some Other Race",
+		hl_044N: "Hispanic or Latino; Three Races: Black or African American; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_045N: "Hispanic or Latino; Three Races: American Indian and Alaska Native; Asian; Native Hawaiian and Other Pacific Islander",
+		hl_046N: "Hispanic or Latino; Three Races: American Indian and Alaska Native; Asian; Some Other Race",
+		hl_047N: "Hispanic or Latino; Three Races: American Indian and Alaska Native; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_048N: "Hispanic or Latino; Three Races: Asian; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_050N: "Hispanic or Latino; Four Races: White; Black or African American; American Indian and Alaska Native; Asian",
+		hl_051N: "Hispanic or Latino; Four Races: White; Black or African American; American Indian and Alaska Native; Native Hawaiian and Other Pacific Islander",
+		hl_052N: "Hispanic or Latino; Four Races: White; Black or African American; American Indian and Alaska Native; Some Other Race",
+		hl_053N: "Hispanic or Latino; Four Races: White; Black or African American; Asian; Native Hawaiian and Other Pacific Islander",
+		hl_054N: "Hispanic or Latino; Four Races: White; Black or African American; Asian; Some Other Race",
+		hl_055N: "Hispanic or Latino; Four Races: White; Black or African American; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_056N: "Hispanic or Latino; Four Races: White; American Indian and Alaska Native; Asian; Native Hawaiian and Other Pacific Islander",
+		hl_057N: "Hispanic or Latino; Four Races: White; American Indian and Alaska Native; Asian; Some Other Race",
+		hl_058N: "Hispanic or Latino; Four Races: White; American Indian and Alaska Native; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_059N: "Hispanic or Latino; Four Races: White; Asian; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_060N: "Hispanic or Latino; Four Races: Black or African American; American Indian and Alaska Native; Asian; Native Hawaiian and Other Pacific Islander",
+		hl_061N: "Hispanic or Latino; Four Races: Black or African American; American Indian and Alaska Native; Asian; Some Other Race",
+		hl_062N: "Hispanic or Latino; Four Races: Black or African American; American Indian and Alaska Native; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_063N: "Hispanic or Latino; Four Races: Black or African American; Asian; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_064N: "Hispanic or Latino; Four Races: American Indian and Alaska Native; Asian; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_066N: "Hispanic or Latino; Five Races: White; Black or African American; American Indian and Alaska Native; Asian; Native Hawaiian and Other Pacific Islander",
+		hl_067N: "Hispanic or Latino; Five Races: White; Black or African American; American Indian and Alaska Native; Asian; Some Other Race",
+		hl_068N: "Hispanic or Latino; Five Races: White; Black or African American; American Indian and Alaska Native; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_069N: "Hispanic or Latino; Five Races: White; Black or African American; Asian; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_070N: "Hispanic or Latino; Five Races: White; American Indian and Alaska Native; Asian; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_071N: "Hispanic or Latino; Five Races: Black or African American; American Indian and Alaska Native; Asian; Native Hawaiian and Other Pacific Islander; Some Other Race",
+		hl_073N: "Hispanic or Latino; Six Races: White; Black or African American; American Indian and Alaska Native; Asian; Native Hawaiian and Other Pacific Islander; Some Other Race",
 	};
 
 	function numberWithCommas(x) {
