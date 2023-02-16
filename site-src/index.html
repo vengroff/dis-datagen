@@ -259,6 +259,46 @@
 		map.fitBounds([[22, -128], [52, -68]])
 		map.setMaxBounds(map.getBounds());
 
+		// Does the URL tell us to move somewhere else?
+		const url = window.location.href;
+		if (url.includes('?')) {
+			var vars = {};
+			for (var assignment of url.split('?')[1].split('&')) {
+				const split = assignment.split('=');
+				vars[split[0]] = parseFloat(split[1]);
+			}
+
+			if(('n' in vars) && ('s' in vars) && ('e' in vars) && ('w' in vars)) {
+				map.fitBounds([
+					[vars['s'], vars['w']],
+					[vars['n'], vars['e']]
+				]);
+			}
+		}
+
+		// Zoom and move event handlers.
+
+		function onZoomOrMoveEnd(e) {
+			const bounds = e.target.getBounds();
+
+			const north = bounds.getNorth();
+			const south = bounds.getSouth();
+			const east = bounds.getEast();
+			const west = bounds.getWest();
+
+			const url = window.location.href;
+			const baseUrl = url.split('?')[0];
+
+			const newUrl = `${baseUrl}?&n=${north}&s=${south}&e=${east}&w=${west}`;
+			const newTitle = "Diversity in America";
+			const newState = { additionalInformation: 'Zoomed or moved.' };
+
+			window.history.replaceState(newState, newTitle, newUrl);
+		}
+
+		map.on("zoomend", onZoomOrMoveEnd);
+		map.on("moveend", onZoomOrMoveEnd);
+
 	// Pop-up for tracts.
 
 	const census_prop_names = {
