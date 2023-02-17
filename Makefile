@@ -52,6 +52,9 @@ RASTER_Z := 2 3 4 5 6 7 8
 
 FAVICON_SIZES := 512 270 192 180 32
 
+ALL_STATES := $(shell $(PYTHON) -c \
+	"from censusdis.states import ALL_STATES_DC_AND_PR; print('\n'.join(ALL_STATES_DC_AND_PR))")
+
 GEN_DATA_DIR := ./build/gendata
 DIST_ROOT := ./dist
 RASTER_TILE_DIR := $(DIST_ROOT)/rastertiles
@@ -141,8 +144,18 @@ $(VECTOR_TILE_DIR):
 
 # Generate geometry for tracts, including diversity
 # and integration attributes.
-$(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GEN_DATA_DIR)
-	$(GENDATA) $(GENDATA_FLAGS) -o $@ tracts
+
+# Rule to download for an individual state.
+$(GEN_DATA_DIR)/tracts-$(YEAR)-%.geojson $(GEN_DATA_DIR)/tracts-$(YEAR)-%.csv: $(GEN_DATA_DIR)
+	$(GENDATA) $(GENDATA_FLAGS) \
+	-o $(GEN_DATA_DIR)/tracts-$(YEAR)-$*.geojson \
+	-c $(GEN_DATA_DIR)/tracts-$(YEAR)-$*.csv \
+	tracts \
+	-s $*
+
+# Once we have all the states we can put them together into one file.
+$(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(ALL_STATES:%=$(GEN_DATA_DIR)/tracts-$(YEAR)-%.geojson)
+	$(PYTHON) -m catgeojson -o $@ $^
 
 # Rebuild if the script changes.
 # $(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GENDATA_PY)
