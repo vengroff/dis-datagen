@@ -42,7 +42,7 @@
   <div class="about">
 	  <p class="copy">Copyright &copy 2023, Darren Erik Vengroff.</p>
 	  <h1>About Diversity and Integration in America</h1>
-	  <p><b>Version:</b> 0.5.1a</p>
+	  <p><b>Version:</b> 0.5.2a</p>
 	  <p><b>Background:</b> See this
 		  <a href="https://datapinions.com/diversity-and-integration-in-america-an-interactive-visualization/">
 			  blog post
@@ -54,7 +54,9 @@
 	      <a href="https://www.census.gov/programs-surveys/decennial-census/about/rdo/summary-files.html">
 		  Decennial Census P.L. 94-171 Redistricting Data
 	      </a>
-		  <a href="https://api.census.gov/data/2020/dec/pl/groups/P2.html">P2 Dataset</a>.
+		  <a href="https://api.census.gov/data/2020/dec/pl/groups/P1.html">P1</a>
+		  and
+		  <a href="https://api.census.gov/data/2020/dec/pl/groups/P2.html">P2</a>  Datasets.
 	  </p>
 	  <p>
 		  <b>Analysis:</b>
@@ -522,6 +524,14 @@
 		return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 	}
 
+	function diPercent(di) {
+		if (isNaN(di)) {
+			return '-';
+		}
+
+		return `${Math.round(100 * di)}%`;
+	}
+
 	function on_map_click(ev) {
 		let wrapped = map.wrapLatLng(ev.latlng);
 
@@ -540,8 +550,8 @@
 				}
 
 				content = content + `<div class="popup-di""><div>${census_prop_names[prop_total_population]}</div><div>${numberWithCommas(total_pop)}</div></div>`;
-				content = content + `<div class="popup-di"><div>Diversity</div><div>${Math.round(100 * props['diversity'])}%</div></div>`;
-				content = content + `<div class="popup-di" style="margin-bottom: 10px"><div>Integration</div><div>${Math.round(100 * props['integration'])}%</div></div>`;
+				content = content + `<div class="popup-di"><div>Diversity</div><div>${diPercent(props['diversity'])}</div></div>`;
+				content = content + `<div class="popup-di" style="margin-bottom: 10px"><div>Integration</div><div>${diPercent(props['integration'])}</div></div>`;
 
 				// Sort population props by value.
 				var pop_items = Object.keys(census_prop_names).filter(
