@@ -27,7 +27,7 @@ html, body {
     margin: 10px;
 }
 
-#homebutton {
+a#homebutton {
     height: 30px;
     width: 30px;
     border: 2px solid rgb(204 204 204);
@@ -41,6 +41,7 @@ html, body {
     line-height: 30px;
     font: 600 24px sans-serif;
     text-decoration-line: none;
+    color: #333;
 }
 
 #titlebutton {
