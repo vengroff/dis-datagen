@@ -4,6 +4,7 @@ html, body {
     margin: 0;
     color: #333;
 }
+
 .leaflet-container {
     height: 400px;
     width: 600px;
@@ -11,18 +12,21 @@ html, body {
     max-height: 100%;
     background: white;
 }
+
 #titlebar {
     margin-left: auto;
     margin-right: auto;
     width: 80%;
     position: relative;
 }
+
 #title {
     text-align: center;
     font: 600 36px sans-serif;
     padding: 10px;
     margin: 10px;
 }
+
 #titlebutton {
     height: 30px;
     width: 30px;
@@ -36,10 +40,12 @@ html, body {
     text-align: center;
     line-height: 30px;
 }
+
 #titlebutton:hover,
 #titlebutton:focus {
     background-color: #f4f4f4;
 }
+
 .mapbox {
     margin-left: auto;
     margin-right: auto;
@@ -47,6 +53,7 @@ html, body {
     aspect-ratio: 16/9;
     border: 2px solid black;
 }
+
 .scalebox {
     width: auto;
     height: auto;
@@ -58,25 +65,30 @@ html, body {
     align-items: center;
     justify-content: center;
 }
+
 .about {
     width: 80%;
     margin: 40px auto;
     font: 400 9px sans-serif;
 }
+
 .about .copy {
     margin-top: 10px;
     margin-bottom: 10px
 }
+
 .about h1 {
     font: 600 10px sans-serif;
     text-decoration: underline;
     margin-top: 10px;
     margin-bottom: 4px
 }
+
 .about p {
     margin-top: 2px;
     margin-bottom: 1px
 }
+
 #scale {
     display: flex;
     height: 1.5em;
@@ -84,31 +96,37 @@ html, body {
     border: 1px solid black;
     margin: 4px;
 }
+
 .colorbar {
     width: 0.5%;
     height: 100%;
 }
+
 .popup {
     max-height: 240px;
     overflow-y: scroll;
-    padding-right:32px;
+    padding-right: 32px;
     font: 400 11px sans-serif;
 }
+
 .popup-head {
     font: 600 14px sans-serif;
     margin-bottom: 10px;
 }
+
 .popup-di {
     font: 600 13px sans-serif;
     margin-top: 4px;
     display: flex;
     justify-content: space-between;
 }
+
 .popup-row {
     margin-top: 3px;
     display: flex;
     justify-content: space-between;
 }
+
 .popup-row div {
     max-width: 80%;
     font-size: 1em;
