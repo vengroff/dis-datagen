@@ -27,6 +27,22 @@ html, body {
     margin: 10px;
 }
 
+#homebutton {
+    height: 30px;
+    width: 30px;
+    border: 2px solid rgb(204 204 204);
+    border-radius: 4px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-45%);
+    left: 0;
+    display: block;
+    text-align: center;
+    line-height: 30px;
+    font: 600 24px sans-serif;
+    text-decoration-line: none;
+}
+
 #titlebutton {
     height: 30px;
     width: 30px;
@@ -42,7 +58,9 @@ html, body {
 }
 
 #titlebutton:hover,
-#titlebutton:focus {
+#titlebutton:focus,
+#homebutton:hover,
+#homebutton:focus {
     background-color: #f4f4f4;
 }
 
