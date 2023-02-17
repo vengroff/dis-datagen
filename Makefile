@@ -90,7 +90,7 @@ STATE_GEO_LAYER_FILES := \
 ALL_GEO_LAYER_FILES := $(STATE_GEO_LAYER_FILES) $(CITY_GEO_LAYER_FILES)
 
 
-.PHONY: all vtiles rtiles site html favicon css js clean distclean
+.PHONY: all vtiles rtiles data tracts site html favicon css js clean distclean
 
 .PRECIOUS: $(GEN_DATA_DIR)/%.geojson
 
@@ -102,6 +102,11 @@ vtiles: $(LAYERS:%=$(VECTOR_TILE_DIR)/%-$(YEAR).pmtiles)
 
 # Raster tiles. Consider packaging up in .pmtiles as well.
 rtiles: $(RASTER_Z:%=$(RASTER_TILE_DIR)/$(CMAP)/diversity/%) $(RASTER_Z:%=$(RASTER_TILE_DIR)/$(CMAP)/integration/%)
+
+# Download all the raw data and do all the D and I computations.
+tracts: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
+
+data: tracts $(ALL_GEO_LAYER_FILES)
 
 # The static site.
 site: html favicon css js
@@ -146,7 +151,7 @@ $(VECTOR_TILE_DIR):
 # and integration attributes.
 
 # Rule to download for an individual state.
-$(GEN_DATA_DIR)/tracts-$(YEAR)-%.geojson $(GEN_DATA_DIR)/tracts-$(YEAR)-%.csv: $(GEN_DATA_DIR)
+$(GEN_DATA_DIR)/tracts-$(YEAR)-%.geojson $(GEN_DATA_DIR)/tracts-$(YEAR)-%.csv:
 	$(GENDATA) $(GENDATA_FLAGS) \
 	-o $(GEN_DATA_DIR)/tracts-$(YEAR)-$*.geojson \
 	-c $(GEN_DATA_DIR)/tracts-$(YEAR)-$*.csv \
@@ -194,4 +199,4 @@ $(RASTER_TILE_DIR)/$(CMAP)/diversity/% $(RASTER_TILE_DIR)/$(CMAP)/integration/% 
 		-Y $(RASTER_${*}_MAX_Y) \
 		-c $(CMAP) \
 		$(GEN_DATA_DIR)/tracts-$(YEAR).geojson
-	touch $@
+	touch $(RASTER_TILE_DIR)/$(CMAP)/diversity/$* $(RASTER_TILE_DIR)/$(CMAP)/integration/$*
