@@ -6,10 +6,10 @@ from typing import Iterable, Optional
 import censusdis.data as ced
 import censusdis.maps as cem
 import divintseg as dis
-import pandas as pd
 import geopandas as gpd
 import numpy as np
-from censusdis.states import ALL_STATES_DC_AND_PR, STATE_NAMES_FROM_IDS, STATE_NY, STATE_NJ, STATE_CT
+import pandas as pd
+from censusdis.states import ALL_STATES_DC_AND_PR, STATE_NAMES_FROM_IDS
 
 verbose = False
 
@@ -132,11 +132,108 @@ def save_city_bounds(year: int, epsg: int, filename: str, rep_filename: Optional
         gdf_cities.to_file(rep_filename)
 
 
-# From https://github.com/vengroff/censusdis/blob/main/notebooks/Nationwide%20Diversity%20and%20Integration.ipynb
-def tract_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
+def hl_variable(variable: str) -> str:
+    """
+    Convert to hispanic or latino variable name.
 
-    group = "P2"
-    total_col = f'{group}_001N'
+    Parameters
+    ----------
+    variable
+        Original variable name.
+    Returns
+    -------
+        Name of derived variable we will use for non-Hispanic or
+        Latino version of the concept measured by this variable.
+    """
+    if not variable.startswith("P1_"):
+        raise ValueError("Must be a P1 variable.")
+
+    # See https://api.census.gov/data/2020/dec/pl/groups/P1.html
+    # and https://api.census.gov/data/2020/dec/pl/groups/P2.html.
+    var_num = int(variable[-4:-1])
+    var_num = var_num + 2
+
+    return f'hl_{var_num:03d}N'
+
+
+def nhl_variable_for_hl_variable(hl_var: str) -> str:
+    if not hl_var.startswith('hl_'):
+        raise ValueError("Must be an hl variable.")
+
+    return hl_var.replace("hl_", "P2_")
+
+
+def all_state_data(year: int, group1: str, group2: str, states: Iterable[str], total_col: str):
+    """Generate all the state data, one data frame per state."""
+    for state in states:
+        if verbose:
+            print(f"Processing {STATE_NAMES_FROM_IDS[state]}")
+
+        # If we load all the variables at once across
+        # both groups the server side sometimes has issues.
+        # So we download the groups separately and then merge.
+        if verbose:
+            print(f"Downloading {group1}")
+
+        df_block_for_state_group1 = ced.download(
+            DATASET,
+            year,
+            leaves_of_group=group1,
+            state=state,
+            block="*",
+        )
+
+        if verbose:
+            print(f"Downloading {group2}")
+
+        df_block_for_state_group2 = ced.download(
+            DATASET,
+            year,
+            [total_col],
+            leaves_of_group=group2,
+            state=state,
+            block="*",
+        )
+
+        df_block_for_state = df_block_for_state_group2.merge(
+            df_block_for_state_group1,
+            on=["STATE", "COUNTY", "TRACT", "BLOCK"],
+        )
+
+        if verbose:
+            print(f"Downladed {len(df_block_for_state.index)} rows.")
+
+        group1_leaves = [var for var in df_block_for_state.columns if var.startswith(group1)]
+
+        # Compute the NHL version of each leaf.
+        for var in group1_leaves:
+            hl_var = hl_variable(var)
+            nhl_var = nhl_variable_for_hl_variable(hl_var)
+
+            df_block_for_state[hl_var] = df_block_for_state[var] - df_block_for_state[nhl_var]
+
+        df_block_for_state = df_block_for_state.drop(group1_leaves, axis='columns')
+
+        hl_leaves = [var for var in df_block_for_state.columns if var.startswith('hl')]
+        nhl_leaves = [nhl_variable_for_hl_variable(var) for var in hl_leaves]
+
+        total_hl_and_non_hl = df_block_for_state[hl_leaves + nhl_leaves].sum(axis='columns')
+        if not (df_block_for_state[total_col].equals(total_hl_and_non_hl)):
+            raise ValueError(
+                "These values should be the same! "
+                "Something went wrong in computing race counts for Hispanic or Latino population."
+            )
+
+        yield df_block_for_state
+
+
+# From https://github.com/vengroff/censusdis/blob/main/notebooks/Nationwide%20Diversity%20and%20Integration.ipynb
+def tract_bounds(year: int, epsg: int, states: Iterable[str]) -> gpd.GeoDataFrame:
+
+    group1 = "P1"
+    group2 = "P2"
+    total_col = f'{group2}_001N'
+    hl_col_in_group2 = f'{group2}_002N'
 
     # Download the data
 
@@ -146,30 +243,15 @@ def tract_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
     # the error and we'll correct it ASAP.  Sorry for
     # the inconvenience." So go state by state and
     # concat them.
-    df_block_per_state = []
-
-    for state in ALL_STATES_DC_AND_PR:
-        if verbose:
-            print(f"Processing {STATE_NAMES_FROM_IDS[state]}")
-
-        df_block_for_state = ced.download(
-            DATASET,
-            year,
-            [total_col],
-            leaves_of_group=group,
-            state=state,
-            block="*",
-        )
-        if verbose:
-            print(f"Downladed {len(df_block_for_state.index)} rows.")
-        df_block_per_state.append(df_block_for_state)
-
-    df_block = pd.concat(df_block_per_state)
+    df_block = pd.concat(all_state_data(year, group1, group2, states, total_col))
 
     if verbose:
-        print(f"Downloaded a total of {len(df_block.index)} rows in {len(df_block_for_state)} state batches.")
+        print(f"Downloaded a total of {len(df_block.index)} rows.")
 
-    leaf_cols = [col for col in df_block.columns if col.startswith(group) and col != total_col]
+    leaf_cols = [
+        col for col in df_block.columns
+        if col.startswith(group2) and col not in [total_col, hl_col_in_group2] or col.startswith('hl')
+    ]
 
     # Compute diversity and integration
 
@@ -188,11 +270,7 @@ def tract_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
         ["STATE", "COUNTY", "TRACT"]
     )[[total_col] + leaf_cols].sum().reset_index()
 
-    # Replace zeros with NaN so they are left out of the
-    # geojson file we write.
-    df_features = df_by_tracts.replace(0, np.nan)
-
-    df_di = df_di.merge(df_features, on=["STATE", "COUNTY", "TRACT"])
+    df_di = df_di.merge(df_by_tracts, on=["STATE", "COUNTY", "TRACT"])
 
     # Infer the geographies
 
@@ -216,7 +294,7 @@ def tract_bounds(year: int, epsg: int) -> gpd.GeoDataFrame:
     return gdf_di.to_crs(epsg=epsg)
 
 
-def save_tract_bounds(year: int, epsg: int, filename: str):
+def save_tract_bounds(year: int, epsg: int, filename: str, states: Iterable[str], csv: Optional[str] = None):
     """
     Generate and save the state bounds.
 
@@ -227,13 +305,33 @@ def save_tract_bounds(year: int, epsg: int, filename: str):
     epsg
         The epsg to project to.
     filename
-        The path to the output file.
+        The path to the geojson output file.
+    states
+        The state(s) to download data for.
+    csv
+        Optional name of file for csv output.
 
     Returns
     -------
         None
     """
-    gdf_tracts = tract_bounds(year, epsg)
+    if states is None:
+        # Warning: the Census API servers are flakey enough that
+        # you are not likely to get through all the states without
+        # any errors.
+        states = ALL_STATES_DC_AND_PR
+
+    gdf_tracts = tract_bounds(year, epsg, states=states)
+
+    if csv:
+        gdf_tracts[
+            [col for col in gdf_tracts if col not in ['geometry', 'COUNTY_NAME']]
+        ].to_csv(csv, index=False)
+
+    # Replace zeros with NaN so they are left out of the
+    # geojson file we write.
+    gdf_tracts.replace(0, np.nan, inplace=True)
+
     with open(filename, 'w') as file:
         file.write(gdf_tracts.to_json(na='drop'))
 
@@ -247,6 +345,13 @@ def main(argv: Iterable[str]):
     parser.add_argument('-e', '--epsg', type=int, default=4326)
     parser.add_argument('-o', '--output', type=str, help="Output file.", required=True)
     parser.add_argument('-r', '--rep-output', type=str, help="Output file of representative points.")
+
+    parser.add_argument(
+        '-s', '--states', nargs="*",
+        help="States to download. Only used for generating data for tracts. Ignored otherwise"
+    )
+
+    parser.add_argument('-c', '--csv', type=str)
 
     parser.add_argument(
         dest='layer',
@@ -268,7 +373,7 @@ def main(argv: Iterable[str]):
     if args.layer == 'states':
         save_state_bounds(year=args.year, epsg=args.epsg, filename=filename, rep_filename=rep_filename)
     elif args.layer == 'tracts':
-        save_tract_bounds(year=args.year, epsg=args.epsg, filename=filename)
+        save_tract_bounds(year=args.year, epsg=args.epsg, filename=filename, csv=args.csv, states=args.states)
     elif args.layer == 'cities':
         save_city_bounds(year=args.year, epsg=args.epsg, filename=filename, rep_filename=rep_filename)
 

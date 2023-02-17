@@ -52,6 +52,9 @@ RASTER_Z := 2 3 4 5 6 7 8
 
 FAVICON_SIZES := 512 270 192 180 32
 
+ALL_STATES := $(shell $(PYTHON) -c \
+	"from censusdis.states import ALL_STATES_DC_AND_PR; print('\n'.join(ALL_STATES_DC_AND_PR))")
+
 GEN_DATA_DIR := ./build/gendata
 DIST_ROOT := ./dist
 RASTER_TILE_DIR := $(DIST_ROOT)/rastertiles
@@ -87,7 +90,7 @@ STATE_GEO_LAYER_FILES := \
 ALL_GEO_LAYER_FILES := $(STATE_GEO_LAYER_FILES) $(CITY_GEO_LAYER_FILES)
 
 
-.PHONY: all vtiles rtiles site html favicon css js clean distclean
+.PHONY: all vtiles rtiles data tracts site html favicon css js clean distclean
 
 .PRECIOUS: $(GEN_DATA_DIR)/%.geojson
 
@@ -99,6 +102,11 @@ vtiles: $(LAYERS:%=$(VECTOR_TILE_DIR)/%-$(YEAR).pmtiles)
 
 # Raster tiles. Consider packaging up in .pmtiles as well.
 rtiles: $(RASTER_Z:%=$(RASTER_TILE_DIR)/$(CMAP)/diversity/%) $(RASTER_Z:%=$(RASTER_TILE_DIR)/$(CMAP)/integration/%)
+
+# Download all the raw data and do all the D and I computations.
+tracts: $(GEN_DATA_DIR)/tracts-$(YEAR).geojson
+
+data: tracts $(ALL_GEO_LAYER_FILES)
 
 # The static site.
 site: html favicon css js
@@ -141,8 +149,18 @@ $(VECTOR_TILE_DIR):
 
 # Generate geometry for tracts, including diversity
 # and integration attributes.
-$(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GEN_DATA_DIR)
-	$(GENDATA) $(GENDATA_FLAGS) -o $@ tracts
+
+# Rule to download for an individual state.
+$(GEN_DATA_DIR)/tracts-$(YEAR)-%.geojson $(GEN_DATA_DIR)/tracts-$(YEAR)-%.csv:
+	$(GENDATA) $(GENDATA_FLAGS) \
+	-o $(GEN_DATA_DIR)/tracts-$(YEAR)-$*.geojson \
+	-c $(GEN_DATA_DIR)/tracts-$(YEAR)-$*.csv \
+	tracts \
+	-s $*
+
+# Once we have all the states we can put them together into one file.
+$(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(ALL_STATES:%=$(GEN_DATA_DIR)/tracts-$(YEAR)-%.geojson)
+	$(PYTHON) -m catgeojson -o $@ $^
 
 # Rebuild if the script changes.
 # $(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GENDATA_PY)
@@ -181,4 +199,4 @@ $(RASTER_TILE_DIR)/$(CMAP)/diversity/% $(RASTER_TILE_DIR)/$(CMAP)/integration/% 
 		-Y $(RASTER_${*}_MAX_Y) \
 		-c $(CMAP) \
 		$(GEN_DATA_DIR)/tracts-$(YEAR).geojson
-	touch $@
+	touch $(RASTER_TILE_DIR)/$(CMAP)/diversity/$* $(RASTER_TILE_DIR)/$(CMAP)/integration/$*
