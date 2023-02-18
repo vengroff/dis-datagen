@@ -9,6 +9,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-o', '--output', type=str, required=True)
+    parser.add_argument('-c', '--csv', type=str)
     parser.add_argument("files", nargs="+")
 
     args = parser.parse_args()
@@ -18,6 +19,11 @@ def main():
     )
     with open(args.output, 'w') as file:
         file.write(gdf_all.to_json(na='drop'))
+
+    if args.csv is not None:
+        gdf_all[
+            [col for col in gdf_all if col not in ['id', 'geometry', 'COUNTY_NAME']]
+        ].to_csv(args.csv, index=False)
 
 
 if __name__ == "__main__":
