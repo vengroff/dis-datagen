@@ -159,8 +159,11 @@ $(GEN_DATA_DIR)/tracts-$(YEAR)-%.geojson $(GEN_DATA_DIR)/tracts-$(YEAR)-%.csv:
 	-s $*
 
 # Once we have all the states we can put them together into one file.
-$(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(ALL_STATES:%=$(GEN_DATA_DIR)/tracts-$(YEAR)-%.geojson)
-	$(PYTHON) -m catgeojson -o $@ $^
+$(GEN_DATA_DIR)/tracts-$(YEAR).geojson $(GEN_DATA_DIR)/tracts-$(YEAR).csv&: $(ALL_STATES:%=$(GEN_DATA_DIR)/tracts-$(YEAR)-%.geojson)
+	$(PYTHON) -m catgeojson \
+	-o $(GEN_DATA_DIR)/tracts-$(YEAR).geojson \
+	-c $(GEN_DATA_DIR)/tracts-$(YEAR).csv \
+	$^
 
 # Rebuild if the script changes.
 # $(GEN_DATA_DIR)/tracts-$(YEAR).geojson: $(GENDATA_PY)
